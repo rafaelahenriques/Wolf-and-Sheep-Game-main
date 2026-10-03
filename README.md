@@ -5,7 +5,7 @@
 </head>
 <body>
 
-<h1><center>Relatório do Projecto Final [Recurso] </center></h1>
+<h1><center>Relatório do Projecto Final  </center></h1>
 
 <h2><center> Fundamentos de Programação </center></h2>  
 
