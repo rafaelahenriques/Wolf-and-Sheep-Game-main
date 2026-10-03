@@ -2,7 +2,7 @@ import os
 import pygame
 from pygame import mixer
 from constants import WIDTHS, HEIGHT, WHITE, BLACK, WIDTH
-
+from storage.db import get_stats
 
 # Game Initialization
 pygame.init()
@@ -98,11 +98,45 @@ def menu(options):
         pygame.display.update()
         clock.tick(FPS)
 
+def stats_screen():
+       surface = pygame.display.set_mode((WIDTHS, HEIGHT))
+       background = pygame.image.load("images/field.png")
+       background = pygame.transform.scale(background, (WIDTHS, HEIGHT))
+       s = get_stats()
+
+       lines = [
+           f"Games played: {s['total']}",
+           f"Vs computer: {s['vs_computer']}   Sheep wins: {s['wins']}",
+           f"Win rate: {s['win_rate']}%",
+           f"Average moves: {s['avg_moves']}",
+           f"Total time: {s['seconds'] // 60} min {s['seconds'] % 60} s",
+       ]
+       for level in ("easy", "medium", "hard"):
+           games, wins = s["by_level"].get(level, (0, 0))
+           lines.append(f"{level.capitalize()}: {wins}/{games} won")
+       lines.append("Esc: back")
+
+       while True:
+           for event in pygame.event.get():
+               if event.type == pygame.QUIT:
+                   pygame.quit()
+                   quit()
+               if event.type == pygame.KEYDOWN and event.key in (pygame.K_ESCAPE, pygame.K_RETURN):
+                   return
+           surface.blit(background, (0, 0))
+           title = text_format("Statistics", font, 70, BLACK)
+           surface.blit(title, (WIDTHS / 2 - title.get_width() / 2, 40))
+           for i, line in enumerate(lines):
+               text = text_format(line, font2, 30, BLACK)
+               surface.blit(text, (WIDTHS / 2 - text.get_width() / 2, 150 + i * 45))
+           pygame.display.update()
+           clock.tick(FPS)
+
 def main_menu():
     import game
     from storage.saves import list_saves, load_game, SAVE_DIR
     while True:
-        choice = menu(["Player vs Computer", "Player vs Player", "Load Game", "Replay Game", "Quit"])
+        choice = menu(["Player vs Computer", "Player vs Player", "Saved Games", "Statistics", "Quit"])
         if choice == "Quit":
             pygame.quit()
             quit()
@@ -113,7 +147,7 @@ def main_menu():
             if level in (None, "Back"):
                 continue
             game.main(game.WIN, WIDTH, "pvc", level.lower())
-        elif choice == "Load Game":
+        elif choice == "Saved Games":
             files = list_saves()
             if not files:
                 continue
@@ -121,7 +155,13 @@ def main_menu():
             if picked in (None, "Back"):
                 continue
             moves, mode, level = load_game(os.path.join(SAVE_DIR, picked))
-            game.main(game.WIN, WIDTH, mode, level, moves)
+            action = menu(["Continue playing", "Watch replay", "Back"])
+            if action == "Continue playing":
+                game.main(game.WIN, WIDTH, mode, level, moves)
+            elif action == "Watch replay":
+                game.replay(game.WIN, WIDTH, moves)
+        elif choice == "Statistics":
+            stats_screen()
             
 
 # Initialize the Game

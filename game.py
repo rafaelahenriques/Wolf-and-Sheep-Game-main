@@ -1,6 +1,7 @@
 import sys
 import pygame
-
+import time
+from storage.db import record_match
 from constants import GREEN, GREEN_L, DARK_G, BLACK, WHITE, WIDTH
 from engine.state import new_game, legal_moves, apply_move, winner
 from ai.players import choose_move
@@ -57,6 +58,8 @@ def main(WIN, WIDTH, mode="pvp", level="easy", moves=None):
     pygame.display.set_caption("Wolf and Sheep Game - Rafaela Henriques")
     history = list(moves) if moves else []
     state = rebuild(history)
+    start = time.time()
+    recorded = winner(state) is not None   # a loaded, already finished game isn't recorded again   
     selected = None      # (row, col) of the piece the player clicked
     targets = []         # squares that piece can move to
 
@@ -71,6 +74,8 @@ def main(WIN, WIDTH, mode="pvp", level="easy", moves=None):
                 if event.key == pygame.K_r:
                     state = new_game()
                     history = []
+                    start = time.time()
+                    recorded = False                   
                     selected, targets = None, []
                 elif event.key == pygame.K_ESCAPE:
                     return
@@ -109,7 +114,10 @@ def main(WIN, WIDTH, mode="pvp", level="easy", moves=None):
         draw_board(WIN, state, targets)
         who = winner(state)
         if who:
-            show_winner(WIN, who)
+           show_winner(WIN, who)
+           if not recorded:
+                record_match(history, mode, level, who, int(time.time() - start))
+                recorded = True
         pygame.display.update()
 
 def replay(WIN, WIDTH, moves):
