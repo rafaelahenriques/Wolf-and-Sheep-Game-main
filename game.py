@@ -52,6 +52,8 @@ def play_sound(turn):
 
 
 def main(WIN, WIDTH, mode="pvp", level="easy"):
+    WIN = pygame.display.set_mode((WIDTH, WIDTH))
+    pygame.display.set_caption("Wolf and Sheep Game - Rafaela Henriques")
     state = new_game()
     selected = None      # (row, col) of the piece the player clicked
     targets = []         # squares that piece can move to
