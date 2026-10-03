@@ -1,312 +1,61 @@
 import sys
-from typing import List
-import pygame
 import random
-from constants import GREEN, GREEN_L, DARK_G, BLACK, WHITE, WIDTHS, HEIGHT, WIDTH
+import pygame
 
-# Making board
-board: List[List[str]] = [['  ' for i in range(8)] for i in range(8)]
+from constants import GREEN, GREEN_L, DARK_G, BLACK, WHITE, WIDTH
+from engine.state import new_game, legal_moves, apply_move, winner
 
-# Game Resolution
-screen = pygame.display.set_mode((WIDTHS, HEIGHT))
-display_surface = pygame.display.set_mode((WIDTHS, HEIGHT))
+# Window (main.py uses game.WIN)
 WIN = pygame.display.set_mode((WIDTH, WIDTH))
-
-# Isto cria a janela em que vamos jogar
 pygame.display.set_caption("Wolf and Sheep Game - Triple zero")
 
+SQUARE = WIDTH // 8
 
-# Esta classe cria as peças do jogo e a distinção entre Wolf and sheep - feita através das teams
-class Piece:
-    def __init__(self, team, type, image, enemy=False):
-        self.team = team
-        self.type = type
-        self.enemy = enemy
-        self.image = image
+WOLF_IMG = pygame.image.load('images/wolf_small.png')
+SHEEP_IMG = pygame.image.load('images/sheep_small.png')
 
 
-# Criar as peças e atribuir imagens
-
-wlf = Piece('w', 'lf', 'images/wolf_small.png')
-
-shp = Piece('s', 'hp', 'images/sheep_small.png')
-
-# Coordenada Wolves
-coordinates_order = {(1, 0): pygame.image.load(wlf.image), (3, 0): pygame.image.load(wlf.image),
-                     (5, 0): pygame.image.load(wlf.image), (7, 0): pygame.image.load(wlf.image),
-
-                     # Espaços vazios coordenadas
-
-                     (0, 0): None, (2, 0): None, (4, 0): None, (6, 0): None,
-                     (0, 1): None, (1, 1): None, (2, 1): None, (3, 1): None,
-                     (4, 1): None, (5, 1): None, (6, 1): None, (7, 1): None,
-                     (0, 2): None, (1, 2): None, (2, 2): None, (3, 2): None,
-                     (4, 2): None, (5, 2): None, (6, 2): None, (7, 2): None,
-                     (0, 3): None, (1, 3): None, (2, 3): None, (3, 3): None,
-                     (4, 3): None, (5, 3): None, (6, 3): None, (7, 3): None,
-                     (0, 4): None, (1, 4): None, (2, 4): None, (3, 4): None,
-                     (4, 4): None, (5, 4): None, (6, 4): None, (7, 4): None,
-                     (0, 5): None, (1, 5): None, (2, 5): None, (3, 5): None,
-                     (4, 5): None, (5, 5): None, (6, 5): None, (7, 5): None,
-
-                     (0, 6): None, (1, 6): None, (2, 6): None, (3, 6): None,
-                     (4, 6): None, (5, 6): None, (6, 6): None, (7, 6): None,
-                     (1, 7): None, (4, 7): None, (2, 7): None, (3, 7): None,
-                     (7, 7): None, (5, 7): None, (6, 7): None,
-
-                     # Coordenada Sheep
-
-                     (0, 7): pygame.image.load(shp.image)}
-
-
-# Colocar as peças no board
-def create_board(board):
-        board[0] = ['  ', Piece('w', 'lf', 'wolf.png'), '  ', Piece('w', 'lf', 'wolf.png'),
-                '  ', Piece('w', 'lf', 'wolf.png'), '  ', Piece('w', 'lf', 'wolf.png')]
-
-        board[7] = [Piece('s', 'hp', 'sheep.png'), '  ', '  ', '  ', '  ', '  ', '  ', '  ']
-        return board
-
-
-# Devolve o input se o input estiver dentro dos limites do board
-
-def on_board(position):
-    if -1 < position[0] < 8 and -1 < position[1] < 8:
-        return True
-
-
-def deselect():
-    for row in range(len(board)):
-        for column in range(len(board[0])):
-            if board[row][column] == 'x ':
-                board[row][column] = '  '
-            else:
-                try:
-                    board[row][column].enemy = False
-                except:
-                    pass
-    return board
-
-
-def highlight(board):
-    highlighted = []
-    for i in range(len(board)):
-        for j in range(len(board[0])):
-            if board[i][j] == 'x ':
-                highlighted.append((i, j))
-    return highlighted
-
-
-def check_team(moves, index):
-    row, col = index
-    if moves % 2 == 0:
-        if board[row][col].team != 's':
-            pass
-        else:
-            return True
-    else:
-        if board[row][col].team != 'w':
-            pass
-        else:
-            return True
-
-
-def select_moves(piece, index, moves):
-    if check_team(moves, index):
-        if piece.type == 'lf':
-            if piece.team == 'w':
-                pygame.mixer.music.load('sounds/wolf.mp3')
-                pygame.mixer.music.play(0)
-                return highlight(wolf_moves(index))
-
-        if piece.type == 'hp':
-            pygame.mixer.music.load('sounds/sheep.mp3')
-            pygame.mixer.music.play(0)
-            return highlight(sheep_moves(index))
-
-
-def wolf_moves(index):
-    diagonals = [[[index[0] + i, index[1] + i] for i in range(1, 2)],
-                 [[index[0] + i, index[1] - i] for i in range(1, 2)],
-                 [[index[0] - i, index[1] + i] for i in range(1, 1)],
-                 [[index[0] - i, index[1] - i] for i in range(1, 1)]]
-
-    for direction in diagonals:
-        for positions in direction:
-            if on_board(positions):
-                if board[positions[0]][positions[1]] == '  ':
-                    board[positions[0]][positions[1]] = 'x '
-
-    return board
-
-
-def sheep_moves(index):
-    diagonals = [[[index[0] + i, index[1] + i] for i in range(1, 2)],
-                 [[index[0] + i, index[1] - i] for i in range(1, 2)],
-                 [[index[0] - i, index[1] + i] for i in range(1, 2)],
-                 [[index[0] - i, index[1] - i] for i in range(1, 2)]]
-
-    for direction in diagonals:
-        for positions in direction:
-            if on_board(positions):
-                if board[positions[0]][positions[1]] == '  ':
-                    board[positions[0]][positions[1]] = 'x '
-
-    return board
-
-
-class Spaces:
-    def __init__(self, row, col, width):
-        self.row = row
-        self.col = col
-        self.x = int(row * width)
-        self.y = int(col * width)
-        self.colour = GREEN_L
-        self.occupied = None
-
-    def draw(self, WIN):
-        pygame.draw.rect(WIN, self.colour, (self.x, self.y, WIDTH / 8, WIDTH / 8))
-
-    def setup(self, WIN):
-        if coordinates_order[(self.row, self.col)]:
-            if coordinates_order[(self.row, self.col)] is None:
-                pass
-            else:
-                WIN.blit(coordinates_order[(self.row, self.col)], (self.x, self.y))
-
-
-def make_grid(rows, width):
-    grid = []
-    gap = WIDTH // rows
-    print(gap)
-    for i in range(rows):
-        grid.append([])
-        for j in range(rows):
-            node = Spaces(j, i, gap)
-            grid[i].append(node)
-            if (i + j) % 2 == 1:
-                grid[i][j].colour = DARK_G
-    return grid
-
-
-def draw_grid(win, rows, width):
-    gap = width // 8
-    for i in range(rows):
-        pygame.draw.line(win, BLACK, (0, i * gap), (width, i * gap))
-        for j in range(rows):
-            pygame.draw.line(win, BLACK, (j * gap, 0), (j * gap, width))
-
-
-def update_display(win, grid, rows, width):
-    for row in grid:
-        for spot in row:
-            spot.draw(win)
-            spot.setup(win)
-    draw_grid(win, rows, width)
-    pygame.display.update()
-
-
-def Find_Space(pos, WIDTH):
-    interval = WIDTH / 8
-    y, x = pos
-    rows = y // interval
-    columns = x // interval
-    return int(rows), int(columns)
-
-
-def display_potential_moves(positions, grid):
-    for i in positions:
-        x, y = i
-        grid[x][y].colour = DARK_G
-
-
-def Do_Move(OriginalPos, FinalPosition, WIN):
-    coordinates_order[FinalPosition] = coordinates_order[OriginalPos]
-    coordinates_order[OriginalPos] = None
-
-
-def remove_highlight(grid):
-    for i in range(len(grid)):
-        for j in range(len(grid[0])):
-            if (i + j) % 2 == 0:
-                grid[i][j].colour = GREEN_L
-            else:
-                grid[i][j].colour = DARK_G
-    return grid
-
-
-create_board(board)
-
-def get_wolf_moves():
-       options = []
-       for row in range(8):
-           for col in range(8):
-               piece = board[row][col]
-               if isinstance(piece, Piece) and piece.team == 'w':
-                   for d_col in (-1, 1):
-                       new_row, new_col = row + 1, col + d_col
-                       if on_board((new_row, new_col)) and board[new_row][new_col] in ('  ', 'x '):
-                           options.append(((row, col), (new_row, new_col)))
-       return options
-
-
-def computer_move():
-       options = get_wolf_moves()
-       if not options:
-           return False
-       (row, col), (new_row, new_col) = random.choice(options)
-       board[new_row][new_col] = board[row][col]
-       board[row][col] = '  '
-       Do_Move((col, row), (new_col, new_row), WIN)
-       return True
-def find_sheep():
+def draw_board(win, state, targets):
     for row in range(8):
         for col in range(8):
-            piece = board[row][col]
-            if isinstance(piece, Piece) and piece.team == 's':
-                return row, col
+            colour = GREEN_L if (row + col) % 2 == 0 else DARK_G
+            if (row, col) in targets:
+                colour = GREEN
+            pygame.draw.rect(win, colour, (col * SQUARE, row * SQUARE, SQUARE, SQUARE))
+
+    for row, col in state.wolves:
+        win.blit(WOLF_IMG, (col * SQUARE, row * SQUARE))
+    row, col = state.sheep
+    win.blit(SHEEP_IMG, (col * SQUARE, row * SQUARE))
+
+    for i in range(9):
+        pygame.draw.line(win, BLACK, (0, i * SQUARE), (8 * SQUARE, i * SQUARE))
+        pygame.draw.line(win, BLACK, (i * SQUARE, 0), (i * SQUARE, 8 * SQUARE))
 
 
-def check_winner(moves):
-    sheep_row, sheep_col = find_sheep()
-
-    # Sheep reached the top row
-    if sheep_row == 0:
-        return 's'
-
-    if moves % 2 == 0:
-        # Sheep's turn: trapped if all four diagonals are blocked
-        for d_row in (-1, 1):
-            for d_col in (-1, 1):
-                pos = (sheep_row + d_row, sheep_col + d_col)
-                if on_board(pos) and board[pos[0]][pos[1]] in ('  ', 'x '):
-                    return None
-                    return None
-        return 'w'
-    else:
-        # Wolves' turn: sheep wins if no wolf can move
-        if not get_wolf_moves():
-            return 's'
-
-    return None
-
-
-def show_winner(win, winner):
-    text = "Sheep win!" if winner == 's' else "Wolves win!"
+def show_winner(win, who):
+    text = "Sheep win!" if who == 's' else "Wolves win!"
     font = pygame.font.Font(None, 90)
     label = font.render(text, True, WHITE)
     rect = label.get_rect(center=(WIDTH // 2, WIDTH // 2))
     pygame.draw.rect(win, BLACK, rect.inflate(60, 40))
     win.blit(label, rect)
-    pygame.display.update()
+
+
+def play_sound(turn):
+    pygame.mixer.music.load('sounds/sheep.mp3' if turn == 's' else 'sounds/wolf.mp3')
+    pygame.mixer.music.play(0)
+
+
+def computer_move(state):
+    return random.choice(legal_moves(state))
 
 
 def main(WIN, WIDTH, mode="pvp"):
-    moves = 0
-    selected = False
-    piece_to_move = []
-    winner = None
-    grid = make_grid(8, WIDTH)
+    state = new_game()
+    selected = None      # (row, col) of the piece the player clicked
+    targets = []         # squares that piece can move to
+
     while True:
         pygame.time.delay(50)
         for event in pygame.event.get():
@@ -314,64 +63,32 @@ def main(WIN, WIDTH, mode="pvp"):
                 pygame.quit()
                 sys.exit()
 
-            # Fecha o programa se a janela for fechada
+            if event.type == pygame.MOUSEBUTTONDOWN and winner(state) is None:
+                x, y = event.pos
+                clicked = (y // SQUARE, x // SQUARE)
 
-            if event.type == pygame.MOUSEBUTTONDOWN and winner is None:
-                pos = pygame.mouse.get_pos()
-                y, x = Find_Space(pos, WIDTH)
-                if not selected:
-                    try:
-                        possible = select_moves((board[x][y]), (x, y), moves)
-                        for positions in possible:
-                            row, col = positions
-                            grid[row][col].colour = GREEN
-                        piece_to_move = x, y
-                        selected = True
-                    except:
-                        piece_to_move = []
+                if clicked in targets:
+                    # Second click on a highlighted square: make the move
+                    state = apply_move(state, (selected, clicked))
+                    selected, targets = None, []
 
+                    if mode == "pvc" and state.turn == 'w' and winner(state) is None:
+                        draw_board(WIN, state, targets)
+                        pygame.display.update()
+                        pygame.time.delay(400)
+                        state = apply_move(state, computer_move(state))
                 else:
-                    try:
-                        if board[x][y].enemy:
-                            row, col = piece_to_move
-                            board[x][y] = board[row][col]
-                            board[row][col] = '  '
-                            deselect()
-                            remove_highlight(grid)
-                            Do_Move((col, row), (y, x), WIN)
-                            moves += 1
+                    # Otherwise try to select a piece that can move
+                    options = [m for m in legal_moves(state) if m[0] == clicked]
+                    if options:
+                        selected = clicked
+                        targets = [end for _, end in options]
+                        play_sound(state.turn)
+                    else:
+                        selected, targets = None, []
 
-                        else:
-                            deselect()
-                            remove_highlight(grid)
-                            print("Deselected")
-
-                    except:
-                        if board[x][y] == 'x ':
-                            [row, col] = piece_to_move
-                            board[x][y] = board[row][col]
-                            board[row][col] = '  '
-                            deselect()
-                            remove_highlight(grid)
-                            Do_Move((col, row), (y, x), WIN)
-                            moves += 1
-
-                            if mode == "pvc" and moves % 2 == 1 and check_winner(moves) is None:
-                                update_display(WIN, grid, 8, WIDTH)
-                                pygame.time.delay(400)
-                                computer_move()
-                                moves += 1
-
-                        else:
-                            deselect()
-                            remove_highlight(grid)
-                            print("Invalid move")
-                    selected = False
-
-            update_display(WIN, grid, 8, WIDTH)
-            winner = check_winner(moves)
-            if winner:
-                show_winner(WIN, winner)
-
-
-
+        draw_board(WIN, state, targets)
+        who = winner(state)
+        if who:
+            show_winner(WIN, who)
+        pygame.display.update()
