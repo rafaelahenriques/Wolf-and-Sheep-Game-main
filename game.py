@@ -111,3 +111,39 @@ def main(WIN, WIDTH, mode="pvp", level="easy", moves=None):
         if who:
             show_winner(WIN, who)
         pygame.display.update()
+
+def replay(WIN, WIDTH, moves):
+    WIN = pygame.display.set_mode((WIDTH, WIDTH))
+    pygame.display.set_caption("Replay - Left/Right: step    Esc: menu")
+    i = 0
+
+    while True:
+        pygame.time.delay(50)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RIGHT:
+                    i = min(i + 1, len(moves))
+                elif event.key == pygame.K_LEFT:
+                    i = max(i - 1, 0)
+                elif event.key == pygame.K_HOME:
+                    i = 0
+                elif event.key == pygame.K_END:
+                    i = len(moves)
+                elif event.key == pygame.K_ESCAPE:
+                    return
+
+        state = rebuild(moves[:i])
+        draw_board(WIN, state, [])
+
+        small = pygame.font.Font(None, 36)
+        label = small.render(f"Move {i} / {len(moves)}", True, WHITE)
+        pygame.draw.rect(WIN, BLACK, (0, 0, label.get_width() + 20, label.get_height() + 10))
+        WIN.blit(label, (10, 5))
+
+        who = winner(state)
+        if who and i == len(moves):
+            show_winner(WIN, who)
+        pygame.display.update()

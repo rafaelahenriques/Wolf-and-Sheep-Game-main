@@ -102,7 +102,7 @@ def main_menu():
     import game
     from storage.saves import list_saves, load_game, SAVE_DIR
     while True:
-        choice = menu(["Player vs Computer", "Player vs Player", "Load Game", "Quit"])
+        choice = menu(["Player vs Computer", "Player vs Player", "Load Game", "Replay Game", "Quit"])
         if choice == "Quit":
             pygame.quit()
             quit()
@@ -122,6 +122,7 @@ def main_menu():
                 continue
             moves, mode, level = load_game(os.path.join(SAVE_DIR, picked))
             game.main(game.WIN, WIDTH, mode, level, moves)
+            
 
 # Initialize the Game
 main_menu()
