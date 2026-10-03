@@ -1,9 +1,9 @@
 import sys
-import random
 import pygame
 
 from constants import GREEN, GREEN_L, DARK_G, BLACK, WHITE, WIDTH
 from engine.state import new_game, legal_moves, apply_move, winner
+from ai.players import choose_move
 
 # Window (main.py uses game.WIN)
 WIN = pygame.display.set_mode((WIDTH, WIDTH))
@@ -51,11 +51,7 @@ def play_sound(turn):
     pygame.mixer.music.play(0)
 
 
-def computer_move(state):
-    return random.choice(legal_moves(state))
-
-
-def main(WIN, WIDTH, mode="pvp"):
+def main(WIN, WIDTH, mode="pvp", level="easy"):
     state = new_game()
     selected = None      # (row, col) of the piece the player clicked
     targets = []         # squares that piece can move to
@@ -87,7 +83,7 @@ def main(WIN, WIDTH, mode="pvp"):
                         draw_board(WIN, state, targets)
                         pygame.display.update()
                         pygame.time.delay(400)
-                        state = apply_move(state, computer_move(state))
+                        state = apply_move(state, choose_move(state, level))
                 else:
                     # Otherwise try to select a piece that can move
                     options = [m for m in legal_moves(state) if m[0] == clicked]
