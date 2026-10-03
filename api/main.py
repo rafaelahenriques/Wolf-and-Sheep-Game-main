@@ -1,0 +1,98 @@
+import time
+import uuid
+
+from fastapi import FastAPI, HTTPException
+
+from ai.players import choose_move
+from api.schemas import GameOut, MoveIn, NewGame
+from engine.state import apply_move, legal_moves, winner
+from storage import db
+from storage.saves import rebuild
+
+app = FastAPI(title="Wolf and Sheep API")
+
+# In-memory games for now: id -> session dict. Finished games go to SQLite.
+games = {}
+
+
+def to_out(game_id, game):
+    state = rebuild(game["history"])
+    who = winner(state)
+    return GameOut(
+        id=game_id,
+        mode=game["mode"],
+        level=game["level"],
+        sheep=state.sheep,
+        wolves=list(state.wolves),
+        turn=state.turn,
+        winner=who,
+        legal_moves=[] if who else legal_moves(state),
+        move_count=len(game["history"]),
+    )
+
+
+def get_game(game_id):
+    game = games.get(game_id)
+    if game is None:
+        raise HTTPException(status_code=404, detail="Game not found")
+    return game
+
+
+def record_if_finished(game):
+    state = rebuild(game["history"])
+    who = winner(state)
+    if who and not game["recorded"]:
+        seconds = int(time.time() - game["started"])
+        db.record_match(game["history"], game["mode"], game["level"], who, seconds)
+        game["recorded"] = True
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
+@app.post("/games", response_model=GameOut, status_code=201)
+def create_game(body: NewGame):
+    game_id = uuid.uuid4().hex[:8]
+    games[game_id] = {
+        "mode": body.mode,
+        "level": body.level,
+        "history": [],
+        "started": time.time(),
+        "recorded": False,
+    }
+    return to_out(game_id, games[game_id])
+
+
+@app.get("/games/{game_id}", response_model=GameOut)
+def read_game(game_id: str):
+    return to_out(game_id, get_game(game_id))
+
+
+@app.post("/games/{game_id}/moves", response_model=GameOut)
+def play_move(game_id: str, body: MoveIn):
+    game = get_game(game_id)
+    state = rebuild(game["history"])
+    if winner(state):
+        raise HTTPException(status_code=400, detail="Game is already over")
+
+    move = (tuple(body.start), tuple(body.end))
+    try:
+        state = apply_move(state, move)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Illegal move")
+    game["history"].append(move)
+
+    # Computer plays the wolves, so the human is always the sheep
+    if game["mode"] == "pvc" and not winner(state):
+        reply = choose_move(state, game["level"])
+        game["history"].append(reply)
+
+    record_if_finished(game)
+    return to_out(game_id, game)
+
+
+@app.get("/")
+def root():
+    return {"message": "Wolf and Sheep API. See /docs for the interactive docs."}
