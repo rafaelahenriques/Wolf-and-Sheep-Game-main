@@ -51,12 +51,13 @@ wolf_image = pygame.image.load(r'images/wolf.png')
 sheep_image = pygame.image.load(r'images/sheep.png')
 
 
-# Main Menu
-def main_menu():
-    options = ["Player vs Computer", "Player vs Player", "Quit"]
-    index = 0
+# Generic menu: shows the options, returns the chosen label (or None on Esc)
+def menu(options):
+    surface = pygame.display.set_mode((WIDTHS, HEIGHT))
+    pygame.display.set_caption("Pygame - Triple Zero")
     background = pygame.image.load("images/field.png")
-    background = pygame.transform.scale(background, (1020, 600))
+    background = pygame.transform.scale(background, (WIDTHS, HEIGHT))
+    index = 0
 
     while True:
         for event in pygame.event.get():
@@ -68,45 +69,52 @@ def main_menu():
                     index = (index - 1) % len(options)
                     pygame.mixer.music.load('sounds/button.mp3')
                     pygame.mixer.music.play(0)
-
                 elif event.key == pygame.K_DOWN:
                     index = (index + 1) % len(options)
                     pygame.mixer.music.load('sounds/button.mp3')
                     pygame.mixer.music.play(0)
-
                 elif event.key == pygame.K_RETURN:
                     pygame.mixer.music.load('sounds/button.mp3')
                     pygame.mixer.music.play(0)
-                    if options[index] == "Quit":
-                        pygame.quit()
-                        quit()
-                    mode = "pvc" if index == 0 else "pvp"
-                    import game
-                    game.main(game.WIN, WIDTH, mode)
+                    return options[index]
+                elif event.key == pygame.K_ESCAPE:
+                    return None
 
-        # Main Menu UI
-        screen.fill(BLACK)
-        display_surface.blit(background, (0, 0))
-
+        surface.blit(background, (0, 0))
         title = text_format("WOLF and SHEEP", font, 80, BLACK)
         subtitle = text_format("Game", font, 70, BLACK)
-        screen.blit(title, (WIDTHS / 2 - title.get_width() / 2, 45))
-        screen.blit(subtitle, (WIDTHS / 2 - subtitle.get_width() / 2, 130))
-
-        display_surface.blit(wolf_image, (50, 170))
-        display_surface.blit(sheep_image, (710, 200))
+        surface.blit(title, (WIDTHS / 2 - title.get_width() / 2, 45))
+        surface.blit(subtitle, (WIDTHS / 2 - subtitle.get_width() / 2, 130))
+        surface.blit(wolf_image, (50, 170))
+        surface.blit(sheep_image, (710, 200))
 
         for i, label in enumerate(options):
             if i == index:
                 text = text_format(label, font2, 42, BLACK)
             else:
                 text = text_format(label, font2, 34, WHITE)
-            screen.blit(text, (WIDTHS / 2 - text.get_width() / 2, 290 + i * 70))
+            surface.blit(text, (WIDTHS / 2 - text.get_width() / 2, 290 + i * 70))
 
         pygame.display.update()
         clock.tick(FPS)
-        pygame.display.set_caption("Pygame - Triple Zero")
-        
+
+
+def main_menu():
+    import game
+    while True:
+        choice = menu(["Player vs Computer", "Player vs Player", "Quit"])
+        if choice == "Quit":
+            pygame.quit()
+            quit()
+        elif choice == "Player vs Player":
+            game.main(game.WIN, WIDTH, "pvp")
+        elif choice == "Player vs Computer":
+            level = menu(["Easy", "Medium", "Hard", "Back"])
+            if level in (None, "Back"):
+                continue
+            game.main(game.WIN, WIDTH, "pvc", level.lower())
+
+
 # Initialize the Game
 main_menu()
 pygame.quit()
