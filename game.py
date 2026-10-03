@@ -3,6 +3,7 @@ from typing import List
 from constants import GREEN, GREEN_L, DARK_G, BLACK, WIDTHS, HEIGHT, WIDTH
 import pygame
 import random
+from constants import GREEN, GREEN_L, DARK_G, BLACK, WHITE, WIDTHS, HEIGHT, WIDTH
 
 # Making board
 board: List[List[str]] = [['  ' for i in range(8)] for i in range(8)]
@@ -259,6 +260,46 @@ def computer_move():
        board[row][col] = '  '
        Do_Move((col, row), (new_col, new_row), WIN)
        return True
+def find_sheep():
+    for row in range(8):
+        for col in range(8):
+            piece = board[row][col]
+            if isinstance(piece, Piece) and piece.team == 's':
+                return row, col
+
+
+def check_winner(moves):
+    sheep_row, sheep_col = find_sheep()
+
+    # Sheep reached the top row
+    if sheep_row == 0:
+        return 's'
+
+    if moves % 2 == 0:
+        # Sheep's turn: trapped if all four diagonals are blocked
+        for d_row in (-1, 1):
+            for d_col in (-1, 1):
+                pos = (sheep_row + d_row, sheep_col + d_col)
+                if on_board(pos) and board[pos[0]][pos[1]] == '  ':
+                    return None
+        return 'w'
+    else:
+        # Wolves' turn: sheep wins if no wolf can move
+        if not get_wolf_moves():
+            return 's'
+
+    return None
+
+
+def show_winner(win, winner):
+    text = "Sheep win!" if winner == 's' else "Wolves win!"
+    font = pygame.font.Font(None, 90)
+    label = font.render(text, True, WHITE)
+    rect = label.get_rect(center=(WIDTH // 2, WIDTH // 2))
+    pygame.draw.rect(win, BLACK, rect.inflate(60, 40))
+    win.blit(label, rect)
+    pygame.display.update()
+
 
 def main(WIN, WIDTH, mode="pvp"):
     moves = 0
