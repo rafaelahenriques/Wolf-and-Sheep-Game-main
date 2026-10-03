@@ -36,10 +36,14 @@ def draw_board(win, state, targets):
 def show_winner(win, who):
     text = "Sheep win!" if who == 's' else "Wolves win!"
     font = pygame.font.Font(None, 90)
+    small = pygame.font.Font(None, 36)
     label = font.render(text, True, WHITE)
-    rect = label.get_rect(center=(WIDTH // 2, WIDTH // 2))
-    pygame.draw.rect(win, BLACK, rect.inflate(60, 40))
+    hint = small.render("R: play again    Esc: menu", True, WHITE)
+    rect = label.get_rect(center=(WIDTH // 2, WIDTH // 2 - 20))
+    hint_rect = hint.get_rect(center=(WIDTH // 2, WIDTH // 2 + 45))
+    pygame.draw.rect(win, BLACK, rect.union(hint_rect).inflate(60, 40))
     win.blit(label, rect)
+    win.blit(hint, hint_rect)
 
 
 def play_sound(turn):
@@ -63,6 +67,13 @@ def main(WIN, WIDTH, mode="pvp"):
                 pygame.quit()
                 sys.exit()
 
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:
+                    state = new_game()
+                    selected, targets = None, []
+                elif event.key == pygame.K_ESCAPE:
+                    return
+                
             if event.type == pygame.MOUSEBUTTONDOWN and winner(state) is None:
                 x, y = event.pos
                 clicked = (y // SQUARE, x // SQUARE)
