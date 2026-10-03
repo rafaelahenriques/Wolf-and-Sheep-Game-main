@@ -1,0 +1,60 @@
+.app {
+  font-family: system-ui, sans-serif;
+  text-align: center;
+  padding: 1rem;
+}
+
+.controls {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.controls button,
+.controls select {
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.status {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.error {
+  color: #c00;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  width: min(90vw, 560px);
+  aspect-ratio: 1;
+  margin: 0 auto;
+  border: 3px solid #333;
+}
+
+.cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(1rem, 6vw, 2.2rem);
+  background: #93e338;
+  user-select: none;
+  cursor: pointer;
+}
+
+.cell.dark {
+  background: #4a6a03;
+}
+
+.cell.target {
+  background: #ffe680;
+}
+
+.cell.selected {
+  outline: 3px solid #fff;
+  outline-offset: -3px;
+}
