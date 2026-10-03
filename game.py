@@ -60,15 +60,11 @@ coordinates_order = {(1, 0): pygame.image.load(wlf.image), (3, 0): pygame.image.
 
 # Colocar as peças no board
 def create_board(board):
-    board[0] = [Piece('e', 'pt', 'empty.png'), Piece('w', 'lf', 'wolf.png'), Piece('w', 'lf', 'empty.png'),
-                Piece('w', 'lf', 'wolf.png'), Piece('e', 'pt', 'empty.png'), Piece('w', 'lf', 'wolf.png'),
-                Piece('e', 'pt', 'empty.png'), Piece('w', 'lf', 'wolf.png')]
+        board[0] = ['  ', Piece('w', 'lf', 'wolf.png'), '  ', Piece('w', 'lf', 'wolf.png'),
+                '  ', Piece('w', 'lf', 'wolf.png'), '  ', Piece('w', 'lf', 'wolf.png')]
 
-    board[7] = [Piece('s', 'hp', 'sheep.png'), Piece('e', 'pt', 'empty.png'), Piece('e', 'pt', 'empty.png'),
-                Piece('e', 'pt', 'empty.png'), Piece('e', 'pt', 'empty.png'), Piece('e', 'pt', 'empty.png'),
-                Piece('e', 'pt', 'empty.png'), Piece('e', 'pt', 'empty.png')]
-
-    return board
+        board[7] = [Piece('s', 'hp', 'sheep.png'), '  ', '  ', '  ', '  ', '  ', '  ', '  ']
+        return board
 
 
 # Devolve o input se o input estiver dentro dos limites do board
