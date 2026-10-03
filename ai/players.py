@@ -1,16 +1,35 @@
 import random
-from engine.state import legal_moves, apply_move, winner
+from collections import deque
+from engine.state import legal_moves, apply_move, winner, on_board
 
 WIN_SCORE = 1000
-DEPTHS = {"medium": 1, "hard": 4}
+DEPTHS = {"medium": 1, "hard": 6}
 
+def sheep_distance(state):
+    """Fewest sheep moves to reach row 0 if the wolves stayed still (None if cut off)."""
+    wolves = set(state.wolves)
+    seen = {state.sheep}
+    queue = deque([(state.sheep, 0)])
+    while queue:
+        (row, col), dist = queue.popleft()
+        if row == 0:
+            return dist
+        for d_row in (-1, 1):
+            for d_col in (-1, 1):
+                nxt = (row + d_row, col + d_col)
+                if on_board(nxt) and nxt not in wolves and nxt not in seen:
+                    seen.add(nxt)
+                    queue.append((nxt, dist + 1))
+    return None
 
 def evaluate(state):
-    """Score a position from the sheep's point of view (higher = better for sheep)."""
+    """Score from the sheep's point of view (higher = better for sheep)."""
     sheep_row = state.sheep[0]
-    # Wolves above the sheep can still block it; wolves it has passed can't.
     blockers = sum(1 for row, _ in state.wolves if row < sheep_row)
-    return 10 * (7 - sheep_row) - 4 * blockers
+    dist = sheep_distance(state)
+    if dist is None:
+        return -500                     # sheep is completely walled in
+    return -10 * dist - 3 * blockers
 
 
 def minimax(state, depth, alpha, beta):
