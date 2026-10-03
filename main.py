@@ -98,11 +98,11 @@ def menu(options):
         pygame.display.update()
         clock.tick(FPS)
 
-
 def main_menu():
     import game
+    from storage.saves import list_saves, load_game, SAVE_DIR
     while True:
-        choice = menu(["Player vs Computer", "Player vs Player", "Quit"])
+        choice = menu(["Player vs Computer", "Player vs Player", "Load Game", "Quit"])
         if choice == "Quit":
             pygame.quit()
             quit()
@@ -113,7 +113,15 @@ def main_menu():
             if level in (None, "Back"):
                 continue
             game.main(game.WIN, WIDTH, "pvc", level.lower())
-
+        elif choice == "Load Game":
+            files = list_saves()
+            if not files:
+                continue
+            picked = menu(files[:6] + ["Back"])
+            if picked in (None, "Back"):
+                continue
+            moves, mode, level = load_game(os.path.join(SAVE_DIR, picked))
+            game.main(game.WIN, WIDTH, mode, level, moves)
 
 # Initialize the Game
 main_menu()
