@@ -4,6 +4,7 @@ import pygame
 from constants import GREEN, GREEN_L, DARK_G, BLACK, WHITE, WIDTH
 from engine.state import new_game, legal_moves, apply_move, winner
 from ai.players import choose_move
+from storage.saves import save_game, rebuild
 
 # Window (main.py uses game.WIN)
 WIN = pygame.display.set_mode((WIDTH, WIDTH))
@@ -51,10 +52,11 @@ def play_sound(turn):
     pygame.mixer.music.play(0)
 
 
-def main(WIN, WIDTH, mode="pvp", level="easy"):
+def main(WIN, WIDTH, mode="pvp", level="easy", moves=None):
     WIN = pygame.display.set_mode((WIDTH, WIDTH))
     pygame.display.set_caption("Wolf and Sheep Game - Rafaela Henriques")
-    state = new_game()
+    history = list(moves) if moves else []
+    state = rebuild(history)
     selected = None      # (row, col) of the piece the player clicked
     targets = []         # squares that piece can move to
 
@@ -68,24 +70,32 @@ def main(WIN, WIDTH, mode="pvp", level="easy"):
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:
                     state = new_game()
+                    history = []
                     selected, targets = None, []
                 elif event.key == pygame.K_ESCAPE:
                     return
-                
+                elif event.key == pygame.K_s:
+                    save_game(history, mode, level)
+                    pygame.display.set_caption("Game saved")
+
             if event.type == pygame.MOUSEBUTTONDOWN and winner(state) is None:
                 x, y = event.pos
                 clicked = (y // SQUARE, x // SQUARE)
 
                 if clicked in targets:
                     # Second click on a highlighted square: make the move
-                    state = apply_move(state, (selected, clicked))
+                    move = (selected, clicked)
+                    history.append(move)
+                    state = apply_move(state, move)
                     selected, targets = None, []
 
                     if mode == "pvc" and state.turn == 'w' and winner(state) is None:
                         draw_board(WIN, state, targets)
                         pygame.display.update()
                         pygame.time.delay(400)
-                        state = apply_move(state, choose_move(state, level))
+                        ai_move = choose_move(state, level)
+                        history.append(ai_move)
+                        state = apply_move(state, ai_move)
                 else:
                     # Otherwise try to select a piece that can move
                     options = [m for m in legal_moves(state) if m[0] == clicked]
