@@ -1,8 +1,8 @@
 import sys
 from typing import List
-from constants import GREEN, GREEN_L, DARK_G, BLACK, WIDTHS, HEIGHT, WIDTH
 import pygame
 import random
+from constants import GREEN, GREEN_L, DARK_G, BLACK, WHITE, WIDTHS, HEIGHT, WIDTH
 
 # Making board
 board: List[List[str]] = [['  ' for i in range(8)] for i in range(8)]
@@ -245,7 +245,7 @@ def get_wolf_moves():
                if isinstance(piece, Piece) and piece.team == 'w':
                    for d_col in (-1, 1):
                        new_row, new_col = row + 1, col + d_col
-                       if on_board((new_row, new_col)) and board[new_row][new_col] == '  ':
+                       if on_board((new_row, new_col)) and board[new_row][new_col] in ('  ', 'x '):
                            options.append(((row, col), (new_row, new_col)))
        return options
 
@@ -259,11 +259,53 @@ def computer_move():
        board[row][col] = '  '
        Do_Move((col, row), (new_col, new_row), WIN)
        return True
+def find_sheep():
+    for row in range(8):
+        for col in range(8):
+            piece = board[row][col]
+            if isinstance(piece, Piece) and piece.team == 's':
+                return row, col
+
+
+def check_winner(moves):
+    sheep_row, sheep_col = find_sheep()
+
+    # Sheep reached the top row
+    if sheep_row == 0:
+        return 's'
+
+    if moves % 2 == 0:
+        # Sheep's turn: trapped if all four diagonals are blocked
+        for d_row in (-1, 1):
+            for d_col in (-1, 1):
+                pos = (sheep_row + d_row, sheep_col + d_col)
+                if on_board(pos) and board[pos[0]][pos[1]] in ('  ', 'x '):
+                    return None
+                    return None
+        return 'w'
+    else:
+        # Wolves' turn: sheep wins if no wolf can move
+        if not get_wolf_moves():
+            return 's'
+
+    return None
+
+
+def show_winner(win, winner):
+    text = "Sheep win!" if winner == 's' else "Wolves win!"
+    font = pygame.font.Font(None, 90)
+    label = font.render(text, True, WHITE)
+    rect = label.get_rect(center=(WIDTH // 2, WIDTH // 2))
+    pygame.draw.rect(win, BLACK, rect.inflate(60, 40))
+    win.blit(label, rect)
+    pygame.display.update()
+
 
 def main(WIN, WIDTH, mode="pvp"):
     moves = 0
     selected = False
     piece_to_move = []
+    winner = None
     grid = make_grid(8, WIDTH)
     while True:
         pygame.time.delay(50)
@@ -274,7 +316,7 @@ def main(WIN, WIDTH, mode="pvp"):
 
             # Fecha o programa se a janela for fechada
 
-            if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.type == pygame.MOUSEBUTTONDOWN and winner is None:
                 pos = pygame.mouse.get_pos()
                 y, x = Find_Space(pos, WIDTH)
                 if not selected:
@@ -303,6 +345,7 @@ def main(WIN, WIDTH, mode="pvp"):
                             deselect()
                             remove_highlight(grid)
                             print("Deselected")
+
                     except:
                         if board[x][y] == 'x ':
                             [row, col] = piece_to_move
@@ -313,7 +356,7 @@ def main(WIN, WIDTH, mode="pvp"):
                             Do_Move((col, row), (y, x), WIN)
                             moves += 1
 
-                            if mode == "pvc" and moves % 2 == 1:
+                            if mode == "pvc" and moves % 2 == 1 and check_winner(moves) is None:
                                 update_display(WIN, grid, 8, WIDTH)
                                 pygame.time.delay(400)
                                 computer_move()
@@ -326,6 +369,9 @@ def main(WIN, WIDTH, mode="pvp"):
                     selected = False
 
             update_display(WIN, grid, 8, WIDTH)
+            winner = check_winner(moves)
+            if winner:
+                show_winner(WIN, winner)
 
 
 
