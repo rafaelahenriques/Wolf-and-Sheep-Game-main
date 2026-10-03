@@ -2,6 +2,7 @@ import sys
 from typing import List
 from constants import GREEN, GREEN_L, DARK_G, BLACK, WIDTHS, HEIGHT, WIDTH
 import pygame
+import random
 
 # Making board
 board: List[List[str]] = [['  ' for i in range(8)] for i in range(8)]
@@ -236,8 +237,30 @@ def remove_highlight(grid):
 
 create_board(board)
 
+def get_wolf_moves():
+       options = []
+       for row in range(8):
+           for col in range(8):
+               piece = board[row][col]
+               if isinstance(piece, Piece) and piece.team == 'w':
+                   for d_col in (-1, 1):
+                       new_row, new_col = row + 1, col + d_col
+                       if on_board((new_row, new_col)) and board[new_row][new_col] == '  ':
+                           options.append(((row, col), (new_row, new_col)))
+       return options
 
-def main(WIN, WIDTH):
+
+def computer_move():
+       options = get_wolf_moves()
+       if not options:
+           return False
+       (row, col), (new_row, new_col) = random.choice(options)
+       board[new_row][new_col] = board[row][col]
+       board[row][col] = '  '
+       Do_Move((col, row), (new_col, new_row), WIN)
+       return True
+
+def main(WIN, WIDTH, mode="pvp"):
     moves = 0
     selected = False
     piece_to_move = []
@@ -290,6 +313,12 @@ def main(WIN, WIDTH):
                             Do_Move((col, row), (y, x), WIN)
                             moves += 1
 
+                            if mode == "pvc" and moves % 2 == 1:
+                                update_display(WIN, grid, 8, WIDTH)
+                                pygame.time.delay(400)
+                                computer_move()
+                                moves += 1
+
                         else:
                             deselect()
                             remove_highlight(grid)
@@ -299,4 +328,5 @@ def main(WIN, WIDTH):
             update_display(WIN, grid, 8, WIDTH)
 
 
-main(WIN, WIDTH)
+
+main(WIN, WIDTH, mode="pvp")
