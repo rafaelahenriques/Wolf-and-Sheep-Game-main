@@ -9,14 +9,12 @@ type Screen = "menu" | "difficulty" | "game" | "stats" | "saves";
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("menu");
-  const [game, setGame] = useState<GameState | null>(null);
-  const [level, setLevel] = useState("easy");
+     const [game, setGame] = useState<GameState | null>(null);
 
-  async function startPvc(chosen: string) {
-    setLevel(chosen);
-    setGame(await newGame("pvc", chosen));
-    setScreen("game");
-  }
+     async function startPvc(chosen: string) {
+       setGame(await newGame("pvc", chosen));
+       setScreen("game");
+     }
 
   async function startPvp() {
     setGame(await newGame("pvp", "easy"));
