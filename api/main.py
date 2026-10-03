@@ -1,13 +1,13 @@
 import time
 import uuid
+import os
 
 from fastapi import FastAPI, HTTPException
-
+from storage.saves import rebuild, save_game, list_saves, load_game, SAVE_DIR
 from ai.players import choose_move
 from api.schemas import GameOut, MoveIn, NewGame
 from engine.state import apply_move, legal_moves, winner
 from storage import db
-from storage.saves import rebuild
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Wolf and Sheep API")
@@ -102,3 +102,43 @@ def play_move(game_id: str, body: MoveIn):
 @app.get("/")
 def root():
     return {"message": "Wolf and Sheep API. See /docs for the interactive docs."}
+
+@app.post("/games/{game_id}/save")
+def save(game_id: str):
+    game = get_game(game_id)
+    path = save_game(game["history"], game["mode"], game["level"])
+    return {"saved": os.path.basename(path)}
+
+
+@app.get("/saves")
+def saves():
+    return {"saves": list_saves()}
+
+
+@app.get("/saves/{name}")
+def read_save(name: str):
+    if name not in list_saves():
+        raise HTTPException(status_code=404, detail="Save not found")
+    moves, mode, level = load_game(os.path.join(SAVE_DIR, name))
+    return {
+        "name": name,
+        "mode": mode,
+        "level": level,
+        "moves": [[list(a), list(b)] for a, b in moves],
+    }
+
+
+@app.post("/saves/{name}/load", response_model=GameOut)
+def load_save(name: str):
+    if name not in list_saves():
+        raise HTTPException(status_code=404, detail="Save not found")
+    moves, mode, level = load_game(os.path.join(SAVE_DIR, name))
+    game_id = uuid.uuid4().hex[:8]
+    games[game_id] = {
+        "mode": mode,
+        "level": level,
+        "history": moves,
+        "started": time.time(),
+        "recorded": winner(rebuild(moves)) is not None,
+    }
+    return to_out(game_id, games[game_id])
