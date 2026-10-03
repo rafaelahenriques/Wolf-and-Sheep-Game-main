@@ -329,4 +329,3 @@ def main(WIN, WIDTH, mode="pvp"):
 
 
 
-main(WIN, WIDTH, mode="pvp")
