@@ -3,12 +3,13 @@ import uuid
 import os
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+
 from storage.saves import rebuild, save_game, list_saves, load_game, SAVE_DIR
 from ai.players import choose_move
 from api.schemas import GameOut, MoveIn, NewGame
 from engine.state import apply_move, legal_moves, winner
 from storage import db
-from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Wolf and Sheep API")
 app.add_middleware(
@@ -17,6 +18,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 # In-memory games for now: id -> session dict. Finished games go to SQLite.
 games = {}
 
@@ -51,6 +53,11 @@ def record_if_finished(game):
         seconds = int(time.time() - game["started"])
         db.record_match(game["history"], game["mode"], game["level"], who, seconds)
         game["recorded"] = True
+
+
+@app.get("/")
+def root():
+    return {"message": "Wolf and Sheep API. See /docs for the interactive docs."}
 
 
 @app.get("/health")
@@ -99,9 +106,10 @@ def play_move(game_id: str, body: MoveIn):
     return to_out(game_id, game)
 
 
-@app.get("/")
-def root():
-    return {"message": "Wolf and Sheep API. See /docs for the interactive docs."}
+@app.get("/stats")
+def stats():
+    return db.get_stats()
+
 
 @app.post("/games/{game_id}/save")
 def save(game_id: str):
