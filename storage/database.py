@@ -8,9 +8,13 @@ DATABASE_URL = os.environ.get(
     "DATABASE_URL", "postgresql+psycopg2://localhost/wolfsheep"
 )
 
-# Render's DATABASE_URL starts with postgres://, which SQLAlchemy needs as postgresql://
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg2://", 1)
+# Render's DATABASE_URL has no driver (postgres:// or postgresql://). SQLAlchemy
+# rejects postgres://, and since 2.1 a bare postgresql:// means psycopg 3, which
+# isn't installed, so always pin the psycopg2 driver.
+for prefix in ("postgres://", "postgresql://"):
+    if DATABASE_URL.startswith(prefix):
+        DATABASE_URL = DATABASE_URL.replace(prefix, "postgresql+psycopg2://", 1)
+        break
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
