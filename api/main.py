@@ -11,10 +11,11 @@ from api.schemas import GameOut, MoveIn, NewGame
 from engine.state import apply_move, legal_moves, winner
 from storage import db
 
-app = FastAPI(title="Wolf and Sheep API")
+allowed = os.environ.get("FRONTEND_URL", "http://localhost:5173")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[origin.strip() for origin in allowed.split(",")],
     allow_methods=["*"],
     allow_headers=["*"],
 )
