@@ -25,13 +25,25 @@ export async function newGame(mode: string, level: string): Promise<GameState> {
   return res.json();
 }
 
+// The error message says why a move failed, so the board can show it.
 export async function sendMove(id: string, start: Pos, end: Pos): Promise<GameState> {
-  const res = await fetch(`${BASE}/games/${id}/moves`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ start, end }),
-  });
-  if (!res.ok) throw new Error("Illegal move");
+  let res: Response;
+  try {
+    res = await fetch(`${BASE}/games/${id}/moves`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ start, end }),
+    });
+  } catch {
+    throw new Error("Couldn't reach the game server");
+  }
+  // Games live in the API's memory, so a server restart forgets them.
+  if (res.status === 404) throw new Error("The server lost this game. Start a new one.");
+  if (res.status >= 500) throw new Error("The server hit an error. Try again.");
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(typeof body?.detail === "string" ? body.detail : "Illegal move");
+  }
   return res.json();
 }
 export interface Stats {
