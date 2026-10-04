@@ -58,6 +58,41 @@ def test_pvc_computer_replies(client):
     assert body["move_count"] == 2
 
 
+# Two-player game where the sheep walks up the left edge to the top row while
+# one wolf steps out of its way and another wanders down the right side.
+SHEEP_TO_TOP = [([7, 0], [6, 1]), ([6, 1], [5, 0]), ([5, 0], [4, 1]), ([4, 1], [3, 0]),
+                ([3, 0], [2, 1]), ([2, 1], [1, 0]), ([1, 0], [0, 1])]
+WOLF_MOVES = [([0, 1], [1, 2]), ([0, 7], [1, 6]), ([1, 6], [2, 7]),
+              ([2, 7], [3, 6]), ([3, 6], [4, 7]), ([4, 7], [5, 6])]
+
+
+def play_sheep_to_top(client):
+    game_id = client.post("/games", json={"mode": "pvp"}).json()["id"]
+    for i, (start, end) in enumerate(SHEEP_TO_TOP):
+        res = client.post(f"/games/{game_id}/moves", json={"start": start, "end": end})
+        if i < len(WOLF_MOVES):
+            start, end = WOLF_MOVES[i]
+            client.post(f"/games/{game_id}/moves", json={"start": start, "end": end})
+    return res
+
+
+def test_sheep_wins_on_top_row(client):
+    res = play_sheep_to_top(client)
+    assert res.status_code == 200
+    assert res.json()["winner"] == "s"
+    assert client.get("/stats").json()["total"] == 1
+
+
+def test_win_survives_stats_failure(client, monkeypatch):
+    def broken_record_match(*args, **kwargs):
+        raise RuntimeError("database unavailable")
+
+    monkeypatch.setattr(db, "record_match", broken_record_match)
+    res = play_sheep_to_top(client)
+    assert res.status_code == 200
+    assert res.json()["winner"] == "s"
+
+
 def test_invalid_level_is_422(client):
     res = client.post("/games", json={"mode": "pvc", "level": "impossible"})
     assert res.status_code == 422
