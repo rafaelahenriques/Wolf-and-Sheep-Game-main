@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { newGame, sendMove, saveGame } from "./api";
 import type { GameState, Pos } from "./api";
 import type { GameState as GS } from "./api";
@@ -67,6 +67,14 @@ export default function Board({
   const [note, setNote] = useState("");
   const [thinking, setThinking] = useState(false);
   const [restarting, setRestarting] = useState(false);
+  // Shown under the Save Game button, then cleared after a few seconds.
+  const [saveNote, setSaveNote] = useState<{ text: string; failed: boolean } | null>(null);
+
+  useEffect(() => {
+    if (!saveNote || saveNote.text === "Saving...") return;
+    const timer = setTimeout(() => setSaveNote(null), 3000);
+    return () => clearTimeout(timer);
+  }, [saveNote]);
 
   const targets: Pos[] =
     selected
@@ -86,9 +94,9 @@ export default function Board({
         wait(vsComputer ? THINK_MS : 0),
       ]);
       setGame(next);
-    } catch {
+    } catch (e) {
       setGame(before);
-      setNote("Illegal move");
+      setNote(e instanceof Error ? e.message : "Illegal move");
     } finally {
       setThinking(false);
     }
@@ -108,11 +116,12 @@ export default function Board({
   }
 
   async function save() {
+    setSaveNote({ text: "Saving...", failed: false });
     try {
       await saveGame(game.id);
-      setNote("Game saved");
+      setSaveNote({ text: "Game saved", failed: false });
     } catch {
-      setNote("Could not save");
+      setSaveNote({ text: "Could not save", failed: true });
     }
   }
 
@@ -250,9 +259,22 @@ export default function Board({
       </div>
 
       <div className="game__right">
-        <button className="game__save" onClick={save}>
-          Save Game
-        </button>
+        <div className="game__save-group">
+          <button
+            className="game__save"
+            onClick={save}
+            disabled={saveNote?.text === "Saving..."}
+          >
+            Save Game
+          </button>
+          <p className="game__save-note" aria-live="polite">
+            {saveNote && (
+              <span key={saveNote.text} className={saveNote.failed ? "is-error" : ""}>
+                {saveNote.text}
+              </span>
+            )}
+          </p>
+        </div>
         <button className="game__quit" onClick={onExit}>
           Menu/Quit
         </button>
