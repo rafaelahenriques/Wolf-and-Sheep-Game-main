@@ -6,8 +6,22 @@ from storage import db
 
 
 @pytest.fixture
-def client(tmp_path, monkeypatch):
-    monkeypatch.setattr(db, "DB_PATH", str(tmp_path / "api.db"))
+def client(monkeypatch):
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from storage import database
+    from storage.models import Base
+
+    url = "postgresql+psycopg2://localhost/wolfsheep_test"
+    engine = create_engine(url)
+    Base.metadata.drop_all(engine)
+    Base.metadata.create_all(engine)
+    TestSession = sessionmaker(bind=engine)
+
+    monkeypatch.setattr(database, "engine", engine)
+    monkeypatch.setattr(database, "SessionLocal", TestSession)
+    monkeypatch.setattr(db, "get_session", lambda: TestSession())
+
     games.clear()
     return TestClient(app)
 

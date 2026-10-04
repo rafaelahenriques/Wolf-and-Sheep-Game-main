@@ -1,70 +1,79 @@
-import json
-import sqlite3
-from datetime import datetime
+from sqlalchemy import func
 
-DB_PATH = "wolfsheep.db"
-
-
-def connect():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-
-def init_db():
-    with connect() as conn:
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS matches (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                played_at TEXT NOT NULL,
-                mode TEXT NOT NULL,
-                level TEXT NOT NULL,
-                winner TEXT NOT NULL,
-                move_count INTEGER NOT NULL,
-                seconds INTEGER NOT NULL,
-                moves TEXT NOT NULL
-            )
-        """)
+from storage.database import get_session
+from storage.models import Game, GamePlayer, Move
+from sqlalchemy import func, Integer
 
 
 def record_match(moves, mode, level, winner, seconds):
-    init_db()
-    data = json.dumps([[list(a), list(b)] for a, b in moves])
-    with connect() as conn:
-        conn.execute(
-            "INSERT INTO matches (played_at, mode, level, winner, move_count, seconds, moves) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (datetime.now().isoformat(timespec="seconds"), mode, level, winner,
-             len(moves), seconds, data),
-        )
+    """Save a finished game: one games row, two game_players rows, one moves row each."""
+    session = get_session()
+    try:
+        game = Game(mode=mode, level=level, winner=winner, seconds=seconds)
+        session.add(game)
+        session.flush()   # assigns game.id without committing yet
+
+        # The human is the sheep, the computer (or player 2) is the wolves
+        sheep_result = "win" if winner == "s" else "loss"
+        wolf_result = "win" if winner == "w" else "loss"
+        session.add(GamePlayer(game_id=game.id, role="sheep", result=sheep_result))
+        session.add(GamePlayer(game_id=game.id, role="wolf", result=wolf_result))
+
+        for i, (start, end) in enumerate(moves):
+            session.add(Move(
+                game_id=game.id,
+                move_number=i,
+                from_pos=f"{start[0]},{start[1]}",
+                to_pos=f"{end[0]},{end[1]}",
+            ))
+
+        session.commit()
+    finally:
+        session.close()
 
 
 def get_stats():
-    """Totals plus the human's win rate against the computer (the human plays sheep)."""
-    init_db()
-    with connect() as conn:
-        total = conn.execute("SELECT COUNT(*) FROM matches").fetchone()[0]
-        row = conn.execute(
-            "SELECT COUNT(*) AS games, "
-            "COALESCE(SUM(winner = 's'), 0) AS wins, "
-            "COALESCE(AVG(move_count), 0) AS avg_moves, "
-            "COALESCE(SUM(seconds), 0) AS seconds "
-            "FROM matches WHERE mode = 'pvc'"
-        ).fetchone()
-        by_level = {
-            r["level"]: (r["games"], r["wins"])
-            for r in conn.execute(
-                "SELECT level, COUNT(*) AS games, SUM(winner = 's') AS wins "
-                "FROM matches WHERE mode = 'pvc' GROUP BY level"
-            )
+    """Totals plus the sheep's win rate against the computer, computed from the tables."""
+    session = get_session()
+    try:
+        total = session.query(Game).count()
+
+        pvc = session.query(Game).filter(Game.mode == "pvc")
+        vs_computer = pvc.count()
+        wins = pvc.filter(Game.winner == "s").count()
+        avg_moves = (
+            session.query(func.avg(func.coalesce(
+                session.query(func.count(Move.id))
+                .filter(Move.game_id == Game.id)
+                .scalar_subquery(), 0)))
+            .filter(Game.mode == "pvc")
+            .scalar()
+        )
+        seconds = (
+            session.query(func.coalesce(func.sum(Game.seconds), 0))
+            .filter(Game.mode == "pvc")
+            .scalar()
+        )
+
+        by_level = {}
+        rows = (
+            session.query(Game.level, func.count(Game.id),
+                          func.sum((Game.winner == "s").cast(Integer)))
+            .filter(Game.mode == "pvc")
+            .group_by(Game.level)
+            .all()
+        )
+        for level, games, level_wins in rows:
+            by_level[level] = (games, int(level_wins or 0))
+
+        return {
+            "total": total,
+            "vs_computer": vs_computer,
+            "wins": wins,
+            "win_rate": round(100 * wins / vs_computer) if vs_computer else 0,
+            "avg_moves": round(avg_moves or 0),
+            "seconds": int(seconds),
+            "by_level": by_level,
         }
-    games = row["games"]
-    return {
-        "total": total,
-        "vs_computer": games,
-        "wins": row["wins"],
-        "win_rate": round(100 * row["wins"] / games) if games else 0,
-        "avg_moves": round(row["avg_moves"]),
-        "seconds": row["seconds"],
-        "by_level": by_level,
-    }
+    finally:
+        session.close()
