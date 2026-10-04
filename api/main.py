@@ -1,3 +1,4 @@
+import logging
 import time
 import uuid
 import os
@@ -10,6 +11,8 @@ from ai.players import choose_move
 from api.schemas import GameOut, MoveIn, NewGame
 from engine.state import apply_move, legal_moves, winner
 from storage import db
+
+log = logging.getLogger(__name__)
 
 allowed = os.environ.get("FRONTEND_URL", "http://localhost:5173")
 
@@ -53,7 +56,14 @@ def record_if_finished(game):
     who = winner(state)
     if who and not game["recorded"]:
         seconds = int(time.time() - game["started"])
-        db.record_match(game["history"], game["mode"], game["level"], who, seconds)
+        try:
+            db.record_match(game["history"], game["mode"], game["level"], who, seconds)
+        except Exception:
+            # Stats are a bonus: if the database is down or unmigrated, the
+            # player should still see the move that won the game (a 500 here
+            # also lacks CORS headers, so browsers report it as unreachable).
+            log.exception("Could not record finished game")
+            return
         game["recorded"] = True
 
 
