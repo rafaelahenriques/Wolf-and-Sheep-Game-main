@@ -1,86 +1,1408 @@
-.app {
-  font-family: system-ui, sans-serif;
-  text-align: center;
-  padding: 1rem;
+/*
+ * Every size is written in design pixels times --u, so a screen keeps the
+ * Figma proportions at any window size. Menu screens were designed on a
+ * 1728x1117 frame, the game screen on 1944x1257.
+ *
+ * Entrance animations use `backwards` fill so the resting styles (and hover
+ * transitions) take over as soon as they finish.
+ */
+.screen {
+  --u: min(calc(100vw / 1728), calc(100svh / 1117));
+  position: relative;
+  min-height: 100svh;
+  overflow: hidden;
+  background: var(--bg);
 }
 
-.controls {
+/* ---------- Keyframes ---------- */
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    translate: 0 calc(28 * var(--u));
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    translate: calc(-48 * var(--u)) 0;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    scale: 0.6;
+  }
+}
+
+@keyframes wipe-in {
+  from {
+    clip-path: inset(-20% 100% -20% 0);
+  }
+  to {
+    clip-path: inset(-20% 0 -20% 0);
+  }
+}
+
+@keyframes block-rise {
+  from {
+    opacity: 0;
+    translate: 0 120%;
+  }
+}
+
+@keyframes block-slide {
+  from {
+    opacity: 0;
+    translate: 120% 0;
+  }
+}
+
+@keyframes float {
+  to {
+    translate: 0 calc(-16 * var(--u));
+  }
+}
+
+@keyframes ping {
+  from {
+    opacity: 0.45;
+    scale: 1;
+  }
+  to {
+    opacity: 0;
+    scale: 1.7;
+  }
+}
+
+@keyframes blink {
+  0%,
+  80%,
+  100% {
+    opacity: 0.15;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -50% 0;
+  }
+}
+
+@keyframes shake {
+  20%,
+  60% {
+    translate: -6px 0;
+  }
+  40%,
+  80% {
+    translate: 6px 0;
+  }
+}
+
+@keyframes cell-in {
+  from {
+    opacity: 0;
+    scale: 0.4;
+  }
+}
+
+@keyframes piece-in {
+  from {
+    opacity: 0;
+    translate: 0 -70%;
+    scale: 0.7;
+  }
+}
+
+@keyframes grow {
+  from {
+    scale: 0 1;
+  }
+}
+
+/* ---------- Screen transitions (View Transitions API) ---------- */
+
+/* The title and the black blocks glide between screens; the rest cross-fades. */
+::view-transition-group(*) {
+  animation-duration: 560ms;
+  animation-timing-function: var(--ease-out);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 320ms;
+}
+
+.masthead__title {
+  view-transition-name: brand;
+}
+
+.checkers span:nth-child(1) {
+  view-transition-name: block-1;
+}
+.checkers span:nth-child(2) {
+  view-transition-name: block-2;
+}
+.checkers span:nth-child(3) {
+  view-transition-name: block-3;
+}
+.checkers span:nth-child(4) {
+  view-transition-name: block-4;
+}
+
+/* ---------- Masthead: "Wolf & Sheep" + GAME ---------- */
+
+.masthead {
+  display: inline-flex;
+  flex-direction: column;
+}
+
+.masthead__title {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: calc(96 * var(--u));
+  line-height: normal;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+/* Only on first load; after that the title glides between screens instead. */
+:root:not([data-navigated]) .masthead__title {
+  animation: wipe-in 900ms var(--ease-out) backwards;
+}
+
+.masthead__row {
   display: flex;
-  gap: 0.5rem;
+  align-items: flex-start;
+  margin-top: calc(-13 * var(--u));
+  color: #000;
+  animation: rise-in 600ms var(--ease-out) 250ms backwards;
+}
+
+.masthead__subtitle {
+  padding-left: calc(21 * var(--u));
+  font-size: calc(48 * var(--u));
+}
+
+.masthead__game {
+  margin-left: auto;
+  font-size: calc(64 * var(--u));
+  font-weight: 700;
+}
+
+/* ---------- Black menu buttons with the plum pointer ---------- */
+
+.menu {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-item {
+  position: relative;
+  width: calc(532 * var(--u));
+  animation: slide-in-left 600ms var(--ease-out) backwards;
+  animation-delay: calc(200ms + var(--i) * 80ms);
+}
+
+.subscreen .menu-item {
+  animation-name: rise-in;
+}
+
+.menu-btn {
+  display: block;
+  width: 100%;
+  height: calc(84 * var(--u));
+}
+
+.menu-btn:focus-visible {
+  outline: none; /* the pointer and bold label show focus */
+}
+
+.menu-btn[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+/* Only the face tilts, so the button's hit area stays put while hovered. */
+.menu-btn__face {
+  display: flex;
+  align-items: center;
   justify-content: center;
-  margin-bottom: 1rem;
+  width: 100%;
+  height: 100%;
+  background: var(--ink-strong);
+  color: var(--on-ink);
+  font-size: calc(48 * var(--u));
+  white-space: nowrap;
+  transition:
+    transform 320ms var(--ease-spring),
+    scale 160ms var(--ease-out);
 }
 
-.controls button,
-.controls select {
-  padding: 0.5rem 1rem;
-  font-size: 1rem;
-  cursor: pointer;
+.menu-btn:active .menu-btn__face {
+  scale: 0.97;
 }
 
-.status {
-  font-size: 1.2rem;
-  font-weight: bold;
+.menu-btn.is-busy {
+  cursor: progress;
 }
 
-.error {
-  color: #c00;
+.menu-btn.is-busy .menu-btn__face {
+  background: linear-gradient(100deg, var(--ink-strong) 35%, #3d3d3d 50%, var(--ink-strong) 65%) 0 0 /
+    250% 100%;
+  animation: shimmer 1.1s linear infinite;
+}
+
+.menu-pointer {
+  position: absolute;
+  top: 50%;
+  /* Rotated -90deg to point left; its tip sits 58 design px from the button. */
+  left: calc(100% + 52.8 * var(--u));
+  width: calc(71.88 * var(--u));
+  transform: translateY(-50%) rotate(-90deg);
+  translate: calc(24 * var(--u)) 0;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 200ms ease,
+    translate 360ms var(--ease-spring),
+    transform 320ms var(--ease-spring);
+}
+
+.menu-btn:focus-visible .menu-btn__face {
+  font-weight: 700;
+}
+.menu-btn:focus-visible + .menu-pointer {
+  opacity: 1;
+  translate: 0 0;
+}
+.menu-item--tilt .menu-btn:focus-visible .menu-btn__face {
+  transform: rotate(6.57deg);
+}
+.menu-item--tilt .menu-btn:focus-visible + .menu-pointer {
+  transform: translateY(calc(-50% + 34 * var(--u))) rotate(-90deg);
+}
+
+@media (hover: hover) {
+  .menu-btn:not([aria-disabled]):hover .menu-btn__face {
+    font-weight: 700;
+  }
+  .menu-btn:not([aria-disabled]):hover + .menu-pointer {
+    opacity: 1;
+    translate: 0 0;
+  }
+  .menu-item--tilt .menu-btn:not([aria-disabled]):hover .menu-btn__face {
+    transform: rotate(6.57deg);
+  }
+  .menu-item--tilt .menu-btn:not([aria-disabled]):hover + .menu-pointer {
+    transform: translateY(calc(-50% + 34 * var(--u))) rotate(-90deg);
+  }
+}
+
+/* "Waking up the game server..." / error line under a menu. */
+.server-status {
+  position: absolute;
+  top: calc(100% + 22 * var(--u));
+  left: 0;
+  font-size: max(14px, calc(24 * var(--u)));
+  color: var(--muted);
+  white-space: nowrap;
+  animation: fade-in 300ms ease backwards;
+}
+
+.server-status--error {
+  color: var(--plum);
+  animation: shake 420ms var(--ease-out);
+}
+
+.subscreen .server-status {
+  width: 100%;
+  text-align: center;
+}
+
+.subscreen__body .server-status {
+  position: static;
+  margin-top: calc(24 * var(--u));
+}
+
+.dots span {
+  animation: blink 1.2s infinite;
+}
+.dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* ---------- Help ("?") buttons ---------- */
+
+.help-link {
+  display: flex;
+  align-items: center;
+  gap: calc(20 * var(--u));
+  font-size: max(14px, calc(24 * var(--u)));
+  font-weight: 300;
+  color: #000;
+  animation: fade-in 600ms ease 700ms backwards;
+}
+
+.help-link__icon {
+  display: block;
+  width: calc(68.17 * var(--u));
+  transition:
+    rotate 360ms var(--ease-spring),
+    scale 360ms var(--ease-spring);
+}
+
+.help-link:hover span {
+  text-decoration: underline;
+}
+
+.help-link:hover .help-link__icon,
+.help-icon:hover img {
+  rotate: -14deg;
+  scale: 1.08;
+}
+
+.help-icon {
+  display: block;
+  border-radius: 50%;
+}
+
+.help-icon img {
+  display: block;
+  width: calc(72 * var(--u));
+  transition:
+    rotate 360ms var(--ease-spring),
+    scale 360ms var(--ease-spring);
+}
+
+.help-icon--corner {
+  position: absolute;
+  top: calc(104 * var(--u));
+  right: calc(92 * var(--u));
+  animation: pop-in 600ms var(--ease-spring) 450ms backwards;
+}
+
+.go-back {
+  position: absolute;
+  left: calc(111 * var(--u));
+  bottom: calc(64 * var(--u));
+  font-size: calc(48 * var(--u));
+  color: #000;
+  animation: fade-in 500ms ease 500ms backwards;
+  transition: color 160ms ease;
+}
+
+.go-back__arrow {
+  display: inline-block;
+  transition: translate 320ms var(--ease-spring);
+}
+
+.go-back:hover {
+  color: var(--plum);
+}
+
+.go-back:hover .go-back__arrow {
+  translate: calc(-12 * var(--u)) 0;
+}
+
+/* ---------- Decorative edge blocks ---------- */
+
+.checkers span {
+  position: absolute;
+  width: calc(232 * var(--u));
+  height: calc(184 * var(--u));
+  background: var(--ink-strong);
+}
+
+:root:not([data-navigated]) .checkers--home span {
+  animation: block-rise 800ms var(--ease-out) backwards;
+  animation-delay: calc(350ms + var(--i) * 90ms);
+}
+
+:root:not([data-navigated]) .checkers--difficulty span {
+  animation: block-slide 800ms var(--ease-out) backwards;
+  animation-delay: calc(350ms + var(--i) * 90ms);
+}
+
+.checkers--home span:nth-child(1) {
+  right: calc(612 * var(--u));
+  bottom: calc(-100 * var(--u));
+  height: calc(185 * var(--u));
+}
+.checkers--home span:nth-child(2) {
+  right: calc(380 * var(--u));
+  bottom: calc(85 * var(--u));
+}
+.checkers--home span:nth-child(3) {
+  right: calc(148 * var(--u));
+  bottom: calc(-100 * var(--u));
+  height: calc(185 * var(--u));
+}
+.checkers--home span:nth-child(4) {
+  right: calc(-84 * var(--u));
+  bottom: calc(85 * var(--u));
+}
+
+.checkers--difficulty span:nth-child(1) {
+  right: calc(-184 * var(--u));
+  top: calc(465 * var(--u));
+}
+.checkers--difficulty span:nth-child(2) {
+  right: calc(48 * var(--u));
+  top: calc(649 * var(--u));
+}
+.checkers--difficulty span:nth-child(3) {
+  right: calc(-184 * var(--u));
+  top: calc(833 * var(--u));
+}
+
+/* ---------- Home ---------- */
+
+.home__main {
+  padding: calc(185 * var(--u)) 0 0 calc(131 * var(--u));
+}
+
+.home .menu {
+  margin: calc(49 * var(--u)) 0 0 calc(61 * var(--u));
+  gap: calc(56 * var(--u));
+}
+
+.home .menu-item--online {
+  margin-top: calc(45 * var(--u));
+}
+
+.home .help-link {
+  margin: calc(107 * var(--u)) 0 0 calc(61 * var(--u));
+}
+
+.home__bubbles {
+  display: contents;
+}
+
+.bubble {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: max(14px, calc(36 * var(--u)));
+  color: #000;
+  transition:
+    background-color 200ms ease,
+    color 200ms ease,
+    scale 420ms var(--ease-spring);
+}
+
+.bubble img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  transition: opacity 200ms ease;
+}
+
+.bubble span {
+  position: relative;
+}
+
+/* Active circles turn black like the menu buttons: the grey circle fades out
+   over the button's own black, same-shaped background. */
+.bubble:focus-visible,
+.bubble:active {
+  background: var(--ink-strong);
+  color: var(--on-ink);
+}
+
+.bubble:focus-visible img,
+.bubble:active img {
+  opacity: 0;
+}
+
+@media (hover: hover) {
+  .bubble:hover {
+    background: var(--ink-strong);
+    color: var(--on-ink);
+    scale: 1.04;
+  }
+
+  .bubble:hover img {
+    opacity: 0;
+  }
+}
+
+/* Label sits in the visible part of the circle, which runs off the top edge. */
+.bubble--saves {
+  top: calc(-112 * var(--u));
+  right: calc(-84 * var(--u));
+  width: calc(638 * var(--u));
+  aspect-ratio: 638 / 604;
+  padding-top: calc(130 * var(--u));
+  animation:
+    pop-in 800ms var(--ease-spring) 350ms backwards,
+    float 7s ease-in-out 1.2s infinite alternate;
+}
+
+.bubble--stats {
+  top: calc(551 * var(--u));
+  right: calc(380 * var(--u));
+  width: calc(252 * var(--u));
+  aspect-ratio: 252 / 238;
+  padding-top: calc(19 * var(--u));
+  animation:
+    pop-in 800ms var(--ease-spring) 500ms backwards,
+    float 5.5s ease-in-out 1.4s infinite alternate;
+}
+
+/* ---------- Difficulty, Statistics, Saved Games ---------- */
+
+.subscreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: calc(176 * var(--u));
+}
+
+.difficulty .menu {
+  margin-top: calc(189 * var(--u));
+  gap: calc(36 * var(--u));
+}
+
+.subscreen__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: calc(110 * var(--u));
+}
+
+.subscreen__message {
+  font-size: max(16px, calc(32 * var(--u)));
+  color: var(--muted);
+  animation: fade-in 400ms ease backwards;
+}
+
+.stats {
+  display: flex;
+  flex-direction: column;
+  gap: calc(36 * var(--u));
+  width: calc(744 * var(--u));
+}
+
+.stat-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: calc(24 * var(--u));
+}
+
+/* Same proportions as the black blocks at the screen edges. */
+.stat-tile {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  aspect-ratio: 232 / 184;
+  padding: calc(22 * var(--u)) calc(24 * var(--u));
+  background: var(--ink-strong);
+  color: var(--on-ink);
+  animation: rise-in 600ms var(--ease-out) backwards;
+  animation-delay: calc(150ms + var(--i) * 90ms);
+}
+
+.stat-tile__value {
+  font-family: var(--display);
+  font-size: calc(48 * var(--u));
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.stat-tile__label {
+  font-size: max(13px, calc(22 * var(--u)));
+  font-weight: 300;
+  color: #bdbdbd;
+}
+
+.stats__columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: calc(48 * var(--u));
+  animation: fade-in 600ms ease 450ms backwards;
+}
+
+.stat-list {
+  margin: 0;
+  font-size: max(15px, calc(26 * var(--u)));
+}
+
+.stat-list__row {
+  display: flex;
+  justify-content: space-between;
+  padding: calc(10 * var(--u)) 0;
+  border-bottom: 1px solid rgb(0 0 0 / 0.12);
+}
+
+.stat-list dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+.level-bars {
+  display: flex;
+  flex-direction: column;
+  gap: calc(14 * var(--u));
+}
+
+.level-bar__label {
+  display: flex;
+  justify-content: space-between;
+  font-size: max(15px, calc(26 * var(--u)));
+}
+
+.level-bar__track {
+  height: max(4px, calc(10 * var(--u)));
+  margin-top: calc(6 * var(--u));
+  background: rgb(0 0 0 / 0.1);
+}
+
+.level-bar__fill {
+  height: 100%;
+  background: var(--plum);
+  scale: var(--p) 1;
+  transform-origin: left;
+  animation: grow 900ms var(--ease-out) backwards;
+  animation-delay: calc(550ms + var(--i) * 120ms);
+}
+
+.save-list {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  gap: calc(24 * var(--u)) calc(48 * var(--u));
+}
+
+.save-list .menu-item {
+  animation-delay: calc(120ms + var(--i) * 45ms);
+}
+
+.save-list .menu-btn {
+  height: calc(72 * var(--u));
+}
+
+.save-list .menu-btn__face {
+  font-size: max(15px, calc(32 * var(--u)));
+}
+
+.save-list .menu-pointer {
+  display: none;
+}
+
+/* ---------- Game ---------- */
+
+.game {
+  --u: min(calc(100vw / 1944), calc(100svh / 1257));
+  display: grid;
+  grid-template-columns: calc(428 * var(--u)) calc(920 * var(--u)) 1fr;
+  grid-template-rows: auto calc(920 * var(--u));
+  row-gap: calc(25 * var(--u));
+  padding: calc(50 * var(--u)) calc(95 * var(--u)) calc(96 * var(--u)) calc(117 * var(--u));
+  background: var(--bg-game);
+  font-size: calc(48 * var(--u));
+}
+
+/* The menu-screen masthead at two-thirds size, so the board keeps its place. */
+.game__masthead {
+  grid-column: 1 / 3;
+  justify-self: start;
+}
+
+.game__masthead .masthead__title {
+  font-size: calc(64 * var(--u));
+}
+
+.game__masthead .masthead__row {
+  margin-top: calc(-8.7 * var(--u));
+}
+
+.game__masthead .masthead__game {
+  font-size: calc(42.67 * var(--u));
+}
+
+.game__help {
+  grid-column: 3;
+  justify-self: end;
+  align-self: start;
+  margin-top: calc(28 * var(--u));
+  animation: pop-in 600ms var(--ease-spring) 500ms backwards;
+}
+
+.game__left,
+.game__right {
+  animation: fade-in 600ms ease 350ms backwards;
+}
+
+.game__left {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.game__status {
+  padding-left: calc(20 * var(--u));
+}
+
+.game__status-text {
+  animation: rise-in 400ms var(--ease-out) backwards;
+}
+
+.game__side {
+  font-weight: 300;
+  color: var(--muted);
+}
+
+.game__meta {
+  margin-top: calc(28 * var(--u));
+  font-size: max(13px, calc(24 * var(--u)));
+  color: var(--muted);
+}
+
+.game__note {
+  margin-top: calc(16 * var(--u));
+  font-size: max(14px, calc(32 * var(--u)));
+  color: var(--plum);
+  animation: rise-in 300ms var(--ease-out) backwards;
+}
+
+/* Radio: "On air from <country>" sits above the Tunes button. */
+.radio {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: calc(32 * var(--u));
+}
+
+.radio__now {
+  max-width: calc(400 * var(--u));
+  padding-left: calc(20 * var(--u));
+}
+
+.radio__hint {
+  font-size: max(13px, calc(24 * var(--u)));
+  color: var(--muted);
+  animation: fade-in 300ms ease backwards;
+}
+
+.radio__hint--error {
+  color: var(--plum);
+}
+
+.radio__station {
+  animation: rise-in 500ms var(--ease-out) backwards;
+}
+
+.radio__label {
+  display: flex;
+  align-items: center;
+  gap: calc(10 * var(--u));
+  font-size: max(13px, calc(24 * var(--u)));
+  font-weight: 300;
+  color: var(--muted);
+}
+
+.radio__country {
+  margin-top: calc(4 * var(--u));
+  font-size: calc(48 * var(--u));
+  font-weight: 700;
+  line-height: 1.05;
+  color: var(--ink);
+}
+
+.radio__name {
+  max-width: calc(380 * var(--u));
+  margin-top: calc(6 * var(--u));
+  overflow: hidden;
+  font-size: max(13px, calc(24 * var(--u)));
+  color: var(--muted);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.radio__next {
+  margin-top: calc(14 * var(--u));
+  font-size: max(13px, calc(24 * var(--u)));
+  font-weight: 700;
+  color: var(--plum);
+}
+
+.radio__next span {
+  display: inline-block;
+  transition: translate 320ms var(--ease-spring);
+}
+
+.radio__next:hover span {
+  translate: calc(8 * var(--u)) 0;
+}
+
+/* Little equalizer next to "On air from" while a station plays. */
+.eq {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: max(2px, calc(4 * var(--u)));
+  height: max(12px, calc(22 * var(--u)));
+}
+
+.eq span {
+  width: max(3px, calc(5 * var(--u)));
+  height: 100%;
+  background: var(--plum);
+  transform-origin: bottom;
+  animation: eq 0.9s ease-in-out infinite alternate;
+}
+
+.eq span:nth-child(2) {
+  animation-duration: 0.6s;
+  animation-delay: -0.3s;
+}
+
+.eq span:nth-child(3) {
+  animation-duration: 0.75s;
+  animation-delay: -0.5s;
+}
+
+@keyframes eq {
+  from {
+    scale: 1 0.25;
+  }
+}
+
+.tunes {
+  display: flex;
+  align-items: center;
+  gap: calc(59 * var(--u));
+  /* The circle hangs a little below the board, as in the design. */
+  margin-bottom: calc(-28 * var(--u));
+  transition: color 160ms ease;
+}
+
+.tunes__icon {
+  position: relative;
+  isolation: isolate;
+  flex: none;
+  width: calc(110 * var(--u));
+  transition: scale 360ms var(--ease-spring);
+}
+
+/* Pulses behind the circle while music plays. */
+.tunes__icon::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 50%;
+  background: var(--ink);
+  opacity: 0;
+}
+
+.tunes[aria-pressed="true"] .tunes__icon::after {
+  animation: ping 1.8s var(--ease-out) infinite;
+}
+
+.tunes[data-status="tuning"] {
+  cursor: progress;
+}
+
+.tunes[data-status="tuning"] .tunes__icon::after {
+  animation: ping 0.9s var(--ease-out) infinite;
+}
+
+.tunes:hover .tunes__icon {
+  scale: 1.06;
+}
+
+.tunes__circle {
+  display: block;
+  width: 100%;
+}
+
+.tunes__play {
+  position: absolute;
+  top: 50%;
+  left: calc(70 * var(--u));
+  width: calc(97 * var(--u));
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+.tunes__pause {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: calc(46 * var(--u));
+  height: calc(50 * var(--u));
+  border-inline: calc(16 * var(--u)) solid #fff;
+}
+
+.tunes:hover,
+.game__save:hover,
+.game__quit:hover {
+  color: var(--plum);
 }
 
 .board {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(8, 1fr);
-  width: min(90vw, 560px);
+  grid-template-rows: repeat(8, 1fr);
+  width: calc(920 * var(--u));
   aspect-ratio: 1;
-  margin: 0 auto;
-  border: 3px solid #333;
 }
 
+/* Squares cascade in diagonally from the top-left corner. */
 .cell {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(1rem, 6vw, 2.2rem);
-  background: #93e338;
+  background: var(--square-light);
   user-select: none;
-  cursor: pointer;
+  animation: cell-in 450ms var(--ease-out) backwards;
+  animation-delay: calc(var(--d) * 28ms);
+  transition: box-shadow 160ms ease;
 }
 
 .cell.dark {
-  background: #4a6a03;
-}
-
-.cell.target {
-  background: #ffe680;
+  background: var(--ink);
+  cursor: pointer;
 }
 
 .cell.selected {
-  outline: 3px solid #fff;
-  outline-offset: -3px;
+  box-shadow: inset 0 0 0 max(3px, calc(6 * var(--u))) var(--sky);
 }
-.controls.vertical {
-  flex-direction: column;
+
+@media (hover: hover) {
+  .cell.movable:not(.selected):hover {
+    box-shadow: inset 0 0 0 max(2px, calc(4 * var(--u))) rgb(173 196 224 / 0.5);
+  }
+}
+
+.cell.target::after {
+  content: "";
+  width: 30%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--sky);
+  opacity: 0.7;
+  animation: pop-in 280ms var(--ease-spring) backwards;
+  transition:
+    scale 220ms var(--ease-spring),
+    opacity 160ms ease;
+}
+
+.cell.target:hover::after {
+  scale: 1.35;
+  opacity: 1;
+}
+
+/* Pieces sit on their own layer so they can slide from square to square. */
+.pieces {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.piece-slot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
   align-items: center;
-  max-width: 320px;
-  margin: 0 auto;
+  justify-content: center;
+  width: 12.5%;
+  height: 12.5%;
+  transform: translate(calc(var(--c) * 100%), calc(var(--r) * 100%));
+  transition: transform 440ms var(--ease-out);
 }
 
-.controls.vertical button {
-  width: 100%;
+.piece {
+  display: block;
+  animation: piece-in 550ms var(--ease-spring) backwards;
+  animation-delay: calc(450ms + var(--i) * 80ms);
+  transition:
+    scale 280ms var(--ease-spring),
+    translate 280ms var(--ease-spring),
+    filter 280ms ease;
 }
 
-.note {
-  font-style: italic;
+.piece-slot.is-lifted .piece {
+  scale: 1.12;
+  translate: 0 -6%;
+  filter: drop-shadow(0 calc(12 * var(--u)) calc(8 * var(--u)) rgb(0 0 0 / 0.45));
 }
 
-.stats p {
-  margin: 0.2rem 0;
+.piece--wolf {
+  width: calc(105 / 115 * 100%);
 }
 
-.save-list {
+.piece--sheep {
+  width: calc(86 / 115 * 100%);
+}
+
+/* End-of-game panel over the board; waits for the last move to land. */
+.result {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
-  max-width: 420px;
-  margin: 0 auto 1rem;
+  align-items: center;
+  justify-content: center;
+  gap: calc(16 * var(--u));
+  background: rgb(19 19 19 / 0.8);
+  color: var(--on-ink);
+  text-align: center;
+  animation: fade-in 500ms ease 450ms backwards;
+}
+
+.result__title {
+  font-family: var(--display);
+  font-size: calc(88 * var(--u));
+  line-height: normal;
+  animation: pop-in 700ms var(--ease-spring) 600ms backwards;
+}
+
+.result__text {
+  font-size: max(15px, calc(32 * var(--u)));
+  font-weight: 300;
+  animation: rise-in 500ms var(--ease-out) 750ms backwards;
+}
+
+.result__actions {
+  display: flex;
+  gap: calc(24 * var(--u));
+  margin-top: calc(28 * var(--u));
+  animation: rise-in 500ms var(--ease-out) 850ms backwards;
+}
+
+.result__btn {
+  min-width: calc(260 * var(--u));
+  padding: calc(16 * var(--u)) calc(32 * var(--u));
+  border: 2px solid var(--on-ink);
+  font-size: max(15px, calc(36 * var(--u)));
+  color: var(--on-ink);
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    scale 200ms var(--ease-spring);
+}
+
+.result__btn--primary {
+  background: var(--on-ink);
+  color: var(--ink-strong);
+  font-weight: 700;
+}
+
+.result__btn:hover {
+  background: var(--sky);
+  border-color: var(--sky);
+  color: var(--ink-strong);
+}
+
+.result__btn:active {
+  scale: 0.96;
+}
+
+.result__btn:disabled {
+  cursor: progress;
+}
+
+.result__btn:focus-visible {
+  outline-color: var(--sky);
+}
+
+.game__right {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  white-space: nowrap;
+}
+
+.game__save {
+  margin-top: calc(-25 * var(--u));
+  font-weight: 700;
+  color: var(--ink-soft);
+  transition: color 160ms ease;
+}
+
+.game__quit {
+  color: var(--muted);
+  transition: color 160ms ease;
+}
+
+/* ---------- Rules dialog ---------- */
+
+.rules {
+  --u: min(calc(100vw / 1728), calc(100svh / 1117));
+  width: calc(836 * var(--u));
+  max-width: calc(100vw - 32px);
+  max-height: calc(100svh - 32px);
+  padding: 0;
+  border: 0;
+  background: var(--bg-dialog);
+  color: var(--plum-ink);
+  /* Closed state; also where opening starts from (see @starting-style). */
+  opacity: 0;
+  translate: 0 calc(48 * var(--u));
+  scale: 0.96;
+  transition:
+    opacity 260ms ease,
+    translate 460ms var(--ease-out),
+    scale 460ms var(--ease-out),
+    overlay 260ms allow-discrete,
+    display 260ms allow-discrete;
+}
+
+.rules[open] {
+  opacity: 1;
+  translate: 0 0;
+  scale: 1;
+}
+
+@starting-style {
+  .rules[open] {
+    opacity: 0;
+    translate: 0 calc(48 * var(--u));
+    scale: 0.96;
+  }
+}
+
+.rules::backdrop {
+  background: rgb(19 19 19 / 0);
+  transition:
+    background-color 260ms ease,
+    overlay 260ms allow-discrete,
+    display 260ms allow-discrete;
+}
+
+.rules[open]::backdrop {
+  background: rgb(19 19 19 / 0.55);
+}
+
+@starting-style {
+  .rules[open]::backdrop {
+    background: rgb(19 19 19 / 0);
+  }
+}
+
+.rules__panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: calc(770 * var(--u));
+  padding: calc(54 * var(--u)) calc(106 * var(--u)) calc(107 * var(--u)) calc(105 * var(--u));
+}
+
+.rules__close {
+  align-self: flex-end;
+  font-size: max(18px, calc(36 * var(--u)));
+  font-weight: 700;
+  color: var(--plum);
+  transition: scale 200ms var(--ease-spring);
+}
+
+.rules__close:hover {
+  scale: 1.08;
+}
+
+.rules__intro {
+  max-width: calc(600 * var(--u));
+  margin-top: calc(113 * var(--u));
+  font-size: max(16px, calc(32 * var(--u)));
+}
+
+.rules__title {
+  margin-top: calc(116 * var(--u));
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: max(20px, calc(36 * var(--u)));
+  line-height: normal;
+}
+
+.rules__list {
+  max-width: calc(600 * var(--u));
+  margin: calc(8 * var(--u)) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: max(14px, calc(24 * var(--u)));
+}
+
+.rules__list li::before {
+  content: "-";
+}
+
+.rules[open] .rules__intro {
+  animation: rise-in 500ms var(--ease-out) 120ms backwards;
+}
+
+.rules[open] .rules__title {
+  animation: rise-in 500ms var(--ease-out) 200ms backwards;
+}
+
+.rules[open] .rules__list li {
+  animation: rise-in 500ms var(--ease-out) backwards;
+  animation-delay: calc(260ms + var(--i) * 60ms);
+}
+
+/* ---------- Portrait / phone: stack everything ---------- */
+
+@media (max-aspect-ratio: 1/1) {
+  .screen,
+  .rules {
+    --u: calc((100vw - 32px) / 760);
+  }
+
+  .checkers,
+  .menu-pointer {
+    display: none;
+  }
+
+  .menu,
+  .menu-item {
+    width: 100%;
+  }
+
+  .menu-btn {
+    min-height: 52px;
+  }
+
+  .home__main {
+    padding: 56px 16px 0;
+  }
+
+  .home .menu,
+  .home .help-link {
+    margin-left: 0;
+  }
+
+  .server-status {
+    white-space: normal;
+  }
+
+  .home__bubbles {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    padding: 64px 16px 48px;
+  }
+
+  .bubble {
+    position: relative;
+    inset: auto;
+    width: 42vw;
+    padding: 0;
+    font-size: 17px;
+  }
+
+  .subscreen {
+    padding: 56px 16px 32px;
+  }
+
+  .subscreen__body,
+  .stats,
+  .save-list {
+    width: 100%;
+  }
+
+  .stats__columns,
+  .save-list {
+    grid-template-columns: 1fr;
+  }
+
+  .go-back {
+    position: static;
+    align-self: flex-start;
+    margin-top: 40px;
+    font-size: 20px;
+  }
+
+  .help-icon img {
+    width: 44px;
+  }
+
+  .help-icon--corner {
+    top: 12px;
+    right: 12px;
+  }
+
+  .game {
+    --u: calc((100vw - 32px) / 920);
+    grid-template-columns: 1fr auto;
+    grid-template-rows: none;
+    grid-template-areas:
+      "title help"
+      "status status"
+      "board board"
+      "tunes actions";
+    row-gap: 20px;
+    align-content: start;
+    padding: 24px 16px 32px;
+  }
+
+  .game__masthead {
+    grid-area: title;
+    align-self: center;
+  }
+
+  .game__help {
+    grid-area: help;
+    margin-top: 0;
+  }
+
+  .game__left {
+    display: contents;
+  }
+
+  .game__status {
+    grid-area: status;
+    padding: 0;
+  }
+
+  .board {
+    grid-area: board;
+  }
+
+  .radio {
+    grid-area: tunes;
+    gap: 16px;
+  }
+
+  .radio__now {
+    padding-left: 0;
+  }
+
+  .tunes {
+    margin: 0;
+  }
+
+  .game__right {
+    grid-area: actions;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .game__save {
+    margin-top: 0;
+  }
 }
