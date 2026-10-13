@@ -19,6 +19,13 @@ import "./App.css";
 
 type Screen = "menu" | "difficulty" | "game" | "stats" | "saves";
 
+// How the computer plays each level (see ai/players.py).
+const LEVELS = [
+  { id: "easy", name: "Easy", hint: "Wolves move at random." },
+  { id: "medium", name: "Medium", hint: "Wolves look one move ahead." },
+  { id: "hard", name: "Hard", hint: "Wolves plan six moves ahead." },
+];
+
 export default function App() {
   const [screen, setScreen] = useState<Screen>("menu");
      const [game, setGame] = useState<GameState | null>(null);
@@ -66,7 +73,7 @@ export default function App() {
       {screen === "menu" && (
         <main className="screen home">
           <div className="home__main">
-            <Masthead />
+            <Masthead tumble />
             <nav className="menu" aria-label="Game modes">
               <MenuButton index={0} tilt onClick={() => go("difficulty")}>
                 Player vs Computer
@@ -79,7 +86,10 @@ export default function App() {
               </MenuButton>
               <ServerStatus slow={slow} error={error} />
             </nav>
-            <HelpButton withLabel onClick={showRules} />
+            <footer className="home__footer">
+              <HelpButton withLabel onClick={showRules} />
+              <p className="home__about">One sheep against four wolves on a checkerboard.</p>
+            </footer>
           </div>
           <div className="home__bubbles">
             <button className="bubble bubble--saves" onClick={() => go("saves")}>
@@ -91,29 +101,38 @@ export default function App() {
               <span>Statistics</span>
             </button>
           </div>
-          <Checkers variant="home" count={4} />
+          <Checkers variant="home" />
         </main>
       )}
 
       {screen === "difficulty" && (
         <main className="screen subscreen difficulty">
-          <Masthead subtitle="Difficulty" />
+          <span className="difficulty__circle" aria-hidden="true" />
+          <Masthead subtitle="Difficulty" tumble />
           <nav className="menu" aria-label="Difficulty">
-            {["easy", "medium", "hard"].map((level, i) => (
+            {LEVELS.map((level, i) => (
               <MenuButton
-                key={level}
+                key={level.id}
                 index={i}
-                busy={busy === level}
-                onClick={() => startPvc(level)}
+                busy={busy === level.id}
+                onClick={() => startPvc(level.id)}
               >
-                {level[0].toUpperCase() + level.slice(1)}
+                {level.name}
               </MenuButton>
             ))}
             <ServerStatus slow={slow} error={error} />
           </nav>
+          <dl className="levels">
+            {LEVELS.map((level) => (
+              <div key={level.id}>
+                <dt>{level.name}</dt>
+                <dd>{level.hint}</dd>
+              </div>
+            ))}
+          </dl>
           <GoBack onClick={() => go("menu")} />
           <HelpButton className="help-icon--corner" onClick={showRules} />
-          <Checkers variant="difficulty" count={3} />
+          <Checkers variant="difficulty" />
         </main>
       )}
 
