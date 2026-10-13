@@ -1,5 +1,5 @@
-import { useState } from "react";
-import {  newGame, loadSave } from "./api";
+import { useEffect, useState } from "react";
+import {  newGame, loadSave, wakeServer } from "./api";
 import type { GameState} from "./api";
 import Board from "./Board";
 import { StatsScreen, SavedGamesScreen } from "./Screens";
@@ -28,6 +28,9 @@ export default function App() {
   const [slow, setSlow] = useState(false);
   const [error, setError] = useState("");
   const showRules = () => setRulesOpen(true);
+
+  // Start waking a sleeping server as soon as the page opens.
+  useEffect(wakeServer, []);
 
   function go(next: Screen) {
     setError("");
