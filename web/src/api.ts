@@ -15,6 +15,13 @@ export interface GameState {
   move_count: number;
 }
 
+// Render's free plan puts the API to sleep after 15 idle minutes and takes
+// about a minute to wake it. Pinging on page load starts that wake-up while
+// the player is still on the menu. Failures are fine: real requests report them.
+export function wakeServer() {
+  fetch(`${BASE}/health`).catch(() => {});
+}
+
 export async function newGame(mode: string, level: string): Promise<GameState> {
   const res = await fetch(`${BASE}/games`, {
     method: "POST",
