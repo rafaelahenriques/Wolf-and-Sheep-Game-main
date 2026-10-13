@@ -1,178 +1,235 @@
-<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="utf-8"/>
-</head>
-<body>
+# Project Report
 
-<h1><center>Relatório do Projecto Final  </center></h1>
+## Wolf & Sheep
 
-<h2><center> Fundamentos de Programação </center></h2>  
+![Wolf & Sheep Home Screen](docs/home.jpg)
 
-<center><p><img src="https://i.ibb.co/hfgMVZk/Screenshot-2021-07-13-at-23-01-47.png" width="600"  /></p></center>
+#### Web-based board game with an API and computer opponent
 
+**Version:** 2.0
 
-<h4><center> Projecto de Recurso: Sheep & Wolf </center></h4>  
+**Date:** Tuesday, October 13, 2026
 
-<center>Versão # 1.0</center>
+---
 
-<center>Terça, Julho 13, 2021</center>
+## Table of Contents
 
-<div style="page-break-after:always"></div>
+1. [Basic Information](#1-basic-information)
+2. [Project Overview](#2-project-overview)
+   - 2.1 Game Rules
+   - 2.2 Player Controls
+   - 2.3 Game Modes
+3. [Main Menu](#3-main-menu)
+4. [Game Board](#4-game-board)
+5. [Playing Against the Computer](#5-playing-against-the-computer)
+6. [Project Structure](#6-project-structure)
+7. [Running Locally](#7-running-locally)
+8. [Deployment](#8-deployment)
+9. [Credits](#9-credits)
 
+---
 
-<h2>Tabela de Conteúdos</h2>
+### 1. Basic Information
 
-<ol>
-<li><a href="#informaçãobase">Informação Base</a></li>
-<li><a href="#sumario">Sumário do Projecto</a>
-<ol>
-<li><a href="#regras">Regras do Jogo</a>
-<li><a href="#controlos">Controlos dos Jogadores</a>
-</ol></li>
-<li><a href="#menu">Menu Inicial</a>
-<li><a href="#tabuleiro">Tabuleiro</a>
-<li><a href="#movimentos">Movimentos do Jogador</a></li>
-<li><a href="#contribuiçoes">Contribuições individuais</a></li>
-</ol></li>
+**Project Name**
 
+Wolf & Sheep
 
-<div style="page-break-after: always"></div>
+**Author**
 
+Rafaela Henriques  
+GitHub Username: `rafaelahenriques`
 
-<h3>1. Informação Base <a name="informaçãobase"></a></h3>
+**Versions**
 
-<p> 
+- **1.0 (July 13, 2021):** Original desktop version built with Python and pygame.
+- **2.0 (October 13, 2026):** Web version with an API, database, and computer opponent.
 
-**Nome do Projecto**
+### 2. Project Overview
 
-Projecto de Recurso: Sheep & Wolf
+Wolf & Sheep is a two-player strategy game played on an 8×8 board. One player controls **one sheep**, while the other controls **four wolves**.
 
+The game can be played in a browser, either against the computer or another player on the same device. The original desktop version, developed with pygame, remains part of the project.
 
-**Membros do Projecto**
+![Wolf & Sheep Game](docs/game.jpg)
 
-Rafaela Henriques 22005252
-`Github Username: rafaelahenriques`
+#### 2.1 Game Rules
 
-Sónia Raposo 22000344
-`Github Username Sonia-Raposo `
+Players take turns moving one piece diagonally by one square. The sheep moves first.
 
-Steven Hall 22001753
-`Github Username: bryanb619`
+**The sheep wins by:**
+- Reaching the top row of the board.
 
+**The wolves win by:**
+- Trapping the sheep so that it has no legal moves remaining.
 
-**Data de Completação do Projecto**
+If a player has no legal moves when their turn begins, they lose.
 
-13.07.2021
+#### 2.2 Player Controls
 
-</p>
- 
+The game is controlled using a mouse or touchscreen.
 
-<p>
+- Click or tap a piece to select it. Available moves are highlighted.
+- Click or tap a highlighted square to move the selected piece.
+- Click or tap the selected piece again to cancel the selection.
 
+**Wolf Movement**
+- Wolves can only move diagonally downwards.
 
-<h3>2. Sumário do Projecto <a name="sumario"></a></h3>
+**Sheep Movement**
+- The sheep can move diagonally upwards or downwards.
 
-Este projecto consiste na construção de um tabuleiro de jogo 2D divido em 8x8 casas onde dois jogadores jogam um contra o outro.
+#### 2.3 Game Modes
 
-De um lado do tabuleiro, um jogador controla os **Lobos** e no lado oposto do tabuleiro, outro jogador controla as **Ovelhas**.
+- **Player vs Computer:** The player controls the sheep while the computer controls the wolves. Three difficulty levels are available (see Section 5).
+- **Player vs Player:** Two players take turns on the same device.
+- **Online Multiplayer:** Not yet available.
 
-<center><p><img src="https://i.ibb.co/Sy6XPW1/unknown-1.png" width="500"  /></p></center>
+### 3. Main Menu
 
+The interface was designed in Figma and implemented using React. Headings use the *Boldonse* typeface, while body text uses *Neue Montreal*, with *Inter Tight* as a fallback when Neue Montreal is unavailable.
 
-</p>
+**The main menu includes:**
 
-<p>
+- **Player vs Computer:** Select a difficulty level and start a game.
+- **Player vs Player:** Start a local two-player game.
+- **Online Multiplayer:** Coming soon.
+- **Saved Games:** Resume a previously saved game.
+- **Statistics:** View games played, win rate, average number of moves, and wins by difficulty level.
+- **Confused?:** Open the game rules.
 
-<h4>2.1 Regras do Jogo <a name="regras"></a></h4>
+### 4. Game Board
 
-Os jogadores jogam à vez e apenas conseguem movimentar-se uma casa na diagonal por cada turno. Para movimentarem-se, é utilizado o rato.
+**The game screen includes:**
 
-**Para o jogador que controla os Lobos ganhar:** 
-* Garantir que a ovelha não tem mais movimentos possiveis.
+- An 8×8 board centred on the screen, featuring the sheep (blue circle) and four wolves (purple triangles).
+- Information about the current turn, game mode, difficulty level, and number of moves.
+- **Save Game:** Save the current game to continue later.
+- **Menu/Quit:** Return to the main menu.
+- **Tunes:** Play a live radio station from a randomly selected country, displaying the country and station name through the [Radio Browser](https://www.radio-browser.info) service.
+- **Game Over:** Display the winner alongside **Play Again** and **Menu** buttons.
 
-**Para o jogador que controla as Ovelhas ganhar:**
-* Garantir que a ovelha chega ao topo do tabuleiro.
+Pieces slide between squares, and screen transitions are animated. These animations are disabled when the user's system has reduced-motion preferences enabled.
 
-<h4>2.2 Controlos dos Jogadores<a name="controlos"></a></h4>
+### 5. Playing Against the Computer
 
-**Movimentos do Jogador que controla os Lobos:**
-* Apenas podem movimentar-se nas diagonais para baixo
+The computer controls the wolves. Its logic is implemented in `ai/players.py`.
 
-**Movimentos do Jogador que controla as Ovelhas:**
-* Podem movimentar-se nas diagonais para cima ou para baixo
+Three difficulty levels are available:
 
+- **Easy:** Wolves make random legal moves.
+- **Medium:** Wolves evaluate one move ahead.
+- **Hard:** Wolves search six moves ahead.
 
+The Medium and Hard difficulties use the **minimax algorithm with alpha-beta pruning**.
 
-</p>
+Each board position is evaluated based on the number of moves the sheep needs to reach the top row and how many wolves remain between the sheep and its destination.
 
+### 6. Project Structure
 
-<p>
+| Directory / File | Description |
+|---|---|
+| `engine/` | Game rules, state management, legal moves, and winner detection |
+| `ai/` | Computer opponent logic |
+| `api/` | FastAPI backend used by the web application |
+| `storage/` | PostgreSQL database (SQLAlchemy) and saved games in `saves/` |
+| `migrations/` | Database migrations managed with Alembic |
+| `web/` | Web application built with React, TypeScript, and Vite |
+| `tests/` | Automated tests using pytest |
+| `main.py`, `game.py` | Original desktop version built with pygame |
 
-<h3>3. Menu Inicial <a name="menu"></a></h3>
+**API Endpoints**
 
-Para a criação do Menu Incial foi criado um ficheiro ***py: Menu***.
+- `POST /games` — Starts a new game.
+- `POST /games/{id}/moves` — Makes a move. Against the computer, the response also includes the wolves' move.
+- `POST /games/{id}/save` — Saves a game.
+- `GET /saves` — Retrieves saved games.
+- `POST /saves/{name}/load` — Loads a saved game.
+- `GET /stats` — Retrieves game statistics.
+- `GET /health` — Checks whether the server is running.
 
-**O Menu tem as opções:**
-* Start (Inicia o jogo de tabuleiro)
-* Quit (Sai da aplicação do jogo)
+When the API is running, interactive API documentation is available at `/docs`.
 
-**É neste ficheiro de menu onde é:**
-* Determinado a *Altura e Largura* do Menu
-* Determinado o *limite de FPS* (Frames per Second)
-* Inseridas as *fonts* utilizadas no texto do Menu
-* Inserido os *ficheiros de audio* para a música e sons de navegação de Menu
-* Inseridas as *imagens* de Fundo, da Ovelha e do Lobo que aparecem no Menu
-* Definidas as teclas do Teclado para navegação do Menu
+### 7. Running Locally
 
+**Requirements:** Python 3.12, Node.js, and PostgreSQL.
 
- </p>
+#### API
 
- <p>
+```bash
+python3.12 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+createdb wolfsheep
+alembic upgrade head
+uvicorn api.main:app --reload
+```
 
-<h3>4. Tabuleiro <a name="tabuleiro"></a></h3>
+The API runs at `http://localhost:8000`.
 
+By default, it connects to the `wolfsheep` PostgreSQL database on `localhost`. To use a different database, configure the `DATABASE_URL` environment variable.
 
-Para a criação do tabuleiro foi criado um ficheiro ***py: Main***. 
+#### Web Application
 
-O tamanho do tabuleiro de jogo é de 650x650 pixeis e definido pela variável **WIDTH** e está posicionado acima e centrado do Menu.
+```bash
+cd web
+npm install
+npm run dev
+```
 
-É neste ficheiro que são também definidas as cores em código RBG utilizadas no tabuleiro.
+The application runs at `http://localhost:5173` and connects to the API at `http://localhost:8000`.
 
-As peças são colocadas no tabuleiro através da *função create_board* onde as peças do Wolf são colocadas no topo do tabuleiro e as peças da Sheep colocadas no fundo do tabuleiro.
+To configure a different API address, set `VITE_API_URL` in `web/.env`.
 
- 
-</p>
+#### Desktop Version (pygame)
 
-<p>
+```bash
+python main.py
+```
 
-<h3>5. Movimentos do Jogador <a name="movimentos"></a></h3>
+The desktop version uses the same database for statistics.
 
+#### Tests
 
-Para que existam dois jogadores, foi criada a *class Piece* onde é definido o Jogador Wolf (**wlf**) e a respectiva imagem que representa o jogador e o Jogador Sheep (**shp**) e a imagem que o representa.
+```bash
+createdb wolfsheep_test
+pytest
+```
 
-Tendo em conta que o Jogador Wolf tem movimentos mais limitados que o Jogador Sheep, as coordenadas do mesmo são determinadas para que este apenas consiga movimentar-se para baixo na diagonal enquanto a sheep pode movimentar-se livremente na diagonal no tabuleiro.
+### 8. Deployment
 
+The API is hosted on Render, with its configuration defined in `render.yaml`.
 
-</p>
+**API Configuration**
 
+- **Build command:** `pip install -r requirements-api.txt`
+- **Start command:** `alembic upgrade head && uvicorn api.main:app --host 0.0.0.0 --port $PORT`
+- **Python version:** Defined in `.python-version` (3.12.15).
+- **Environment variables:**
+  - `DATABASE_URL`: Connection string for the Render PostgreSQL database.
+  - `FRONTEND_URL`: Frontend address used for CORS configuration. Multiple addresses can be provided, separated by commas.
 
-<h3>6.Contribuições individuais <a name="contribuiçoes"></a></h3>
+The build installs only the API dependencies, excluding pygame.
+
+Because the service was not created using a Render Blueprint, Render does not automatically apply the `render.yaml` configuration. The build and start commands must also be configured manually in the service settings.
+
+**Frontend Deployment**
+
+The frontend is built using `npm run build` inside the `web/` directory, with `VITE_API_URL` configured to point to the deployed API.
+
+**Render Free Plan Limitations**
+
+- **Server inactivity:** The API goes to sleep after 15 minutes without requests and can take approximately one minute to restart. The frontend sends a request to `/health` when opened to initiate the wake-up process earlier.
+- **Database expiration:** The free PostgreSQL database expires 30 days after creation.
+- **In-memory game state:** Active games are stored in the API's memory and are lost whenever the server restarts.
+
+### 9. Credits
 
 **Rafaela Henriques**
-* Organização e Correções de código
-* Criação do ficheiro ***Menu***
-* Criação do ficheiro ***Main***
-* Criação do Tabuleiro
-* Criação do Menu
 
-**Sónia Raposo**
-* Realização da Arte (Lobo, Ovelha e Fundo)
-* Sons da Wolf e Sheep
-* Colocação das Peças no Tabuleiro
-* Highlight dos movimentos
-* Realização do ficheiro ***readme***
-
-**Steven Hall**
-* Organizacao e Comentários no código
-* Realização do ficheiro ***Postmortem***
+- Interface design (Figma)
+- Web application development (React)
+- API and game engine development
+- Computer opponent AI
+- Database implementation and deployment
+- Original desktop version (pygame)
