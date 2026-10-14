@@ -136,3 +136,6 @@ venv/
 *.db
 web/node_modules/
 web/dist/
+
+# Editor settings
+.idea/
