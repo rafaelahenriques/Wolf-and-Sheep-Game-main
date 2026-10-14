@@ -1,51 +1,48 @@
-# Project Report
+# Wolf & Sheep
 
-## Wolf & Sheep
+[![CI](https://github.com/rafaelahenriques/Wolf-and-Sheep-Game-main/actions/workflows/ci.yml/badge.svg)](https://github.com/rafaelahenriques/Wolf-and-Sheep-Game-main/actions/workflows/ci.yml)
+[![Play in the browser](https://img.shields.io/badge/play-wolfandsheepgame.netlify.app-5b3fa8)](https://wolfandsheepgame.netlify.app)
 
-![Wolf & Sheep Home Screen](docs/home.jpg)
+A turn-based strategy board game with a computer opponent, a REST API and a React web client. It began as a 2021 university group project in Python and Pygame, and in 2026 I rebuilt it on my own as a full-stack app.
 
-#### Web-based board game with an API and computer opponent
+**[Play it in the browser](https://wolfandsheepgame.netlify.app)** · [Case study](https://rafaelahenriques.com/projects/wolf-sheep/) · [Original 2021 version](https://github.com/rafaelahenriques/Wolf-and-Sheep-Game)
 
-**Version:** 2.0
+![Wolf & Sheep home screen](docs/home.jpg)
 
-**Date:** Tuesday, October 13, 2026
+> The API runs on a free hosting plan that sleeps when idle, so the first request can take about a minute while the server wakes up.
+
+## Highlights
+
+- **One engine for every interface.** The game rules live in a pure-Python `engine/` package with no UI code. The Pygame desktop game, the FastAPI backend and the test suite all use the same engine.
+- **Computer opponent.** Easy plays random legal moves. Medium and Hard use minimax with alpha-beta pruning, looking one and six moves ahead.
+- **REST API.** FastAPI endpoints for games, moves, saves and statistics, with interactive documentation at `/docs`.
+- **Persistence.** Saved games and statistics are stored in PostgreSQL through SQLAlchemy, and Alembic migrations manage schema changes.
+- **Typed web client.** The client uses React, TypeScript and Vite, and respects reduced-motion settings.
+- **Tested in CI.** 33 pytest tests cover the engine, AI, API, database and saves. GitHub Actions runs them on every push, along with a lint and build of the web client.
+
+## Tech stack
+
+Python 3.12 · FastAPI · PostgreSQL · SQLAlchemy · Alembic · pytest · React · TypeScript · Vite. The API is deployed on Render and the web client on Netlify.
 
 ---
 
 ## Table of Contents
 
-1. [Basic Information](#1-basic-information)
-2. [Project Overview](#2-project-overview)
-   - 2.1 Game Rules
-   - 2.2 Player Controls
-   - 2.3 Game Modes
-3. [Main Menu](#3-main-menu)
-4. [Game Board](#4-game-board)
-5. [Playing Against the Computer](#5-playing-against-the-computer)
-6. [Project Structure](#6-project-structure)
-7. [Running Locally](#7-running-locally)
-8. [Deployment](#8-deployment)
-9. [Credits](#9-credits)
+1. [Project Overview](#1-project-overview)
+   - 1.1 Game Rules
+   - 1.2 Player Controls
+   - 1.3 Game Modes
+2. [Main Menu](#2-main-menu)
+3. [Game Board](#3-game-board)
+4. [Playing Against the Computer](#4-playing-against-the-computer)
+5. [Project Structure](#5-project-structure)
+6. [Running Locally](#6-running-locally)
+7. [Deployment](#7-deployment)
+8. [Credits and History](#8-credits-and-history)
 
 ---
 
-### 1. Basic Information
-
-**Project Name**
-
-Wolf & Sheep
-
-**Author**
-
-Rafaela Henriques  
-GitHub Username: `rafaelahenriques`
-
-**Versions**
-
-- **1.0 (July 13, 2021):** Original desktop version built with Python and pygame.
-- **2.0 (October 13, 2026):** Web version with an API, database, and computer opponent.
-
-### 2. Project Overview
+### 1. Project Overview
 
 Wolf & Sheep is a two-player strategy game played on an 8×8 board. One player controls **one sheep**, while the other controls **four wolves**.
 
@@ -53,7 +50,7 @@ The game can be played in a browser, either against the computer or another play
 
 ![Wolf & Sheep Game](docs/game.jpg)
 
-#### 2.1 Game Rules
+#### 1.1 Game Rules
 
 Players take turns moving one piece diagonally by one square. The sheep moves first.
 
@@ -65,7 +62,7 @@ Players take turns moving one piece diagonally by one square. The sheep moves fi
 
 If a player has no legal moves when their turn begins, they lose.
 
-#### 2.2 Player Controls
+#### 1.2 Player Controls
 
 The game is controlled using a mouse or touchscreen.
 
@@ -79,13 +76,13 @@ The game is controlled using a mouse or touchscreen.
 **Sheep Movement**
 - The sheep can move diagonally upwards or downwards.
 
-#### 2.3 Game Modes
+#### 1.3 Game Modes
 
 - **Player vs Computer:** The player controls the sheep while the computer controls the wolves. Three difficulty levels are available (see Section 5).
 - **Player vs Player:** Two players take turns on the same device.
 - **Online Multiplayer:** Not yet available.
 
-### 3. Main Menu
+### 2. Main Menu
 
 The interface was designed in Figma and implemented using React. Headings use the *Boldonse* typeface, while body text uses *Neue Montreal*, with *Inter Tight* as a fallback when Neue Montreal is unavailable.
 
@@ -98,7 +95,7 @@ The interface was designed in Figma and implemented using React. Headings use th
 - **Statistics:** View games played, win rate, average number of moves, and wins by difficulty level.
 - **Confused?:** Open the game rules.
 
-### 4. Game Board
+### 3. Game Board
 
 **The game screen includes:**
 
@@ -111,7 +108,7 @@ The interface was designed in Figma and implemented using React. Headings use th
 
 Pieces slide between squares, and screen transitions are animated. These animations are disabled when the user's system has reduced-motion preferences enabled.
 
-### 5. Playing Against the Computer
+### 4. Playing Against the Computer
 
 The computer controls the wolves. Its logic is implemented in `ai/players.py`.
 
@@ -125,7 +122,7 @@ The Medium and Hard difficulties use the **minimax algorithm with alpha-beta pru
 
 Each board position is evaluated based on the number of moves the sheep needs to reach the top row and how many wolves remain between the sheep and its destination.
 
-### 6. Project Structure
+### 5. Project Structure
 
 | Directory / File | Description |
 |---|---|
@@ -150,7 +147,7 @@ Each board position is evaluated based on the number of moves the sheep needs to
 
 When the API is running, interactive API documentation is available at `/docs`.
 
-### 7. Running Locally
+### 6. Running Locally
 
 **Requirements:** Python 3.12, Node.js, and PostgreSQL.
 
@@ -196,7 +193,9 @@ createdb wolfsheep_test
 pytest
 ```
 
-### 8. Deployment
+The same tests run on GitHub Actions for every push and pull request, together with a lint and production build of the web client (see `.github/workflows/ci.yml`).
+
+### 7. Deployment
 
 The API is hosted on Render, with its configuration defined in `render.yaml`.
 
@@ -223,7 +222,7 @@ The frontend is built using `npm run build` inside the `web/` directory, with `V
 - **Database expiration:** The free PostgreSQL database expires 30 days after creation.
 - **In-memory game state:** Active games are stored in the API's memory and are lost whenever the server restarts.
 
-### 9. Credits
+### 8. Credits and history
 
 **Rafaela Henriques**
 
@@ -233,3 +232,8 @@ The frontend is built using `npm run build` inside the `web/` directory, with `V
 - Computer opponent AI
 - Database implementation and deployment
 - Original desktop version (pygame)
+
+**Versions**
+
+- **1.0 (July 2021):** Original desktop version built with Python and Pygame as a university group project. I was responsible for the board, the main game file, the menu and the overall code structure. See [the original repository](https://github.com/rafaelahenriques/Wolf-and-Sheep-Game).
+- **2.0 (October 2026):** Independent rebuild with a shared engine, computer opponent, API, database and web client.
